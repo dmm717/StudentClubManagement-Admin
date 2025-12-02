@@ -1,0 +1,53 @@
+.members-page {
+  max-width: 100%;
+  overflow-x: hidden;
+  animation: fadeIn 0.5s ease-out;
+  width: 100%;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Table responsive - No horizontal scroll */
+.members-page .ant-table-wrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.members-page .ant-table {
+  width: 100%;
+  max-width: 100%;
+}
+
+.members-page .ant-table-container {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.members-page .ant-table-body {
+  overflow-x: hidden !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+  }
+  
+  .page-header > div:first-child {
+    width: 100%;
+  }
+
+  .members-page .ant-table {
+    min-width: 800px;
+  }
+}

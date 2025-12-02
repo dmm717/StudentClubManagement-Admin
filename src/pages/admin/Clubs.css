@@ -1,0 +1,38 @@
+.clubs-page {
+  max-width: 100%;
+  overflow-x: hidden;
+  animation: fadeIn 0.5s ease-out;
+  width: 100%;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Table responsive */
+.clubs-page .ant-table-wrapper {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.clubs-page .ant-table-container {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+  }
+  
+  .page-header > div:first-child {
+    width: 100%;
+  }
+}

@@ -1,0 +1,51 @@
+.reports-page {
+  max-width: 100%;
+  overflow-x: hidden;
+  animation: fadeIn 0.5s ease-out;
+  width: 100%;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Chart containers */
+.reports-page .recharts-wrapper {
+  width: 100% !important;
+}
+
+.reports-page .recharts-surface {
+  width: 100% !important;
+}
+
+/* Print styles */
+@media print {
+  .reports-page .page-header {
+    page-break-after: avoid;
+  }
+  
+  .reports-page .ant-card {
+    page-break-inside: avoid;
+  }
+  
+  .reports-page .ant-tabs {
+    page-break-inside: avoid;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+  }
+  
+  .reports-page .ant-tabs-tab {
+    padding: 8px 12px !important;
+  }
+}
