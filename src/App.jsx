@@ -4,12 +4,9 @@ import AdminLayout from './layouts/AdminLayout';
 import Login from './pages/admin/Login';
 import Dashboard from './pages/admin/Dashboard';
 import Clubs from './pages/admin/Clubs';
-import ClubForm from './pages/admin/ClubForm';
-import Members from './pages/admin/Members';
-import MemberForm from './pages/admin/MemberForm';
-import Fees from './pages/admin/Fees';
 import Requests from './pages/admin/Requests';
-import Reports from './pages/admin/Reports';
+import Accounts from './pages/admin/Accounts';
+import Activities from './pages/admin/Activities';
 import './App.css';
 
 // Protected Route Component
@@ -21,7 +18,12 @@ const ProtectedRoute = ({ children }) => {
 function App() {
   return (
     <ConfigProvider>
-      <Router>
+      <Router
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true,
+        }}
+      >
       <Routes>
         {/* Redirect root to admin login */}
         <Route path="/" element={<Navigate to="/admin/login" />} />
@@ -40,21 +42,10 @@ function App() {
         >
           <Route index element={<Navigate to="/admin/dashboard" />} />
           <Route path="dashboard" element={<Dashboard />} />
-          
-          {/* Clubs Routes */}
           <Route path="clubs" element={<Clubs />} />
-          <Route path="clubs/new" element={<ClubForm />} />
-          <Route path="clubs/:id/edit" element={<ClubForm />} />
-          
-          {/* Members Routes */}
-          <Route path="members" element={<Members />} />
-          <Route path="members/new" element={<MemberForm />} />
-          <Route path="members/:id/edit" element={<MemberForm />} />
-          
-          {/* Other Routes */}
           <Route path="requests" element={<Requests />} />
-          <Route path="fees" element={<Fees />} />
-          <Route path="reports" element={<Reports />} />
+          <Route path="accounts" element={<Accounts />} />
+          <Route path="activities" element={<Activities />} />
         </Route>
       </Routes>
       </Router>

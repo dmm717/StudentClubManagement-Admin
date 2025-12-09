@@ -1,0 +1,25 @@
+.activities-page {
+  padding: 24px;
+}
+
+.activities-page .page-header {
+  margin-bottom: 24px;
+}
+
+.activities-page .header-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.activities-page .header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+

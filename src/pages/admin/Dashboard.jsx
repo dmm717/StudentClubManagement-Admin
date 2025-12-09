@@ -1,50 +1,82 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Card, Row, Col, Table, Tag, Typography, Space, Button } from 'antd';
+import { Card, Row, Col, Typography, Space, Spin } from 'antd';
 import {
   BuildingOfficeIcon,
   UsersIcon,
   DocumentTextIcon,
-  CurrencyDollarIcon,
-  PlusIcon,
-  UserPlusIcon,
-  CheckBadgeIcon,
-  ChartBarIcon
+  UserCircleIcon
 } from '@heroicons/react/24/outline';
-import { clubs, members, joinRequests, fees } from '../../data/mockData';
+import { clubsAPI, clubLeaderRequestAPI, accountsAPI } from '../../services/api';
+import { CurrencyDollarIcon } from '@heroicons/react/24/outline';
 import { getIconSize } from '../../utils/iconSizes';
 import './Dashboard.css';
 
 const { Title, Text } = Typography;
 
+/**
+ * Component Dashboard - Trang chủ quản trị hệ thống
+ * Hiển thị tổng quan thống kê và các quick actions
+ */
 const Dashboard = () => {
+  // State quản lý trạng thái loading
+  const [loading, setLoading] = useState(true);
+  
+  // State lưu trữ các thống kê chính
   const [stats, setStats] = useState({
-    totalClubs: 0,
-    activeClubs: 0,
-    totalMembers: 0,
-    pendingRequests: 0,
-    totalRevenue: 0,
-    pendingFees: 0
+    totalClubs: 0,           // Tổng số câu lạc bộ
+    activeClubs: 0,          // Số CLB đang hoạt động
+    totalAccounts: 0,        // Tổng số tài khoản
+    pendingRequests: 0,      // Số yêu cầu chờ duyệt
+    totalRevenue: 0          // Tổng doanh thu
   });
 
+  // Load dữ liệu khi component mount
   useEffect(() => {
-    // Calculate statistics
-    const activeClubs = clubs.filter(club => club.status === 'active').length;
-    const pendingRequests = joinRequests.filter(req => req.status === 'pending').length;
-    const completedFees = fees.filter(fee => fee.status === 'completed');
-    const totalRevenue = completedFees.reduce((sum, fee) => sum + fee.amount, 0);
-    const pendingFees = fees.filter(fee => fee.status === 'pending' || fee.status === 'overdue').length;
-
-    setStats({
-      totalClubs: clubs.length,
-      activeClubs,
-      totalMembers: members.length,
-      pendingRequests,
-      totalRevenue,
-      pendingFees
-    });
+    loadDashboardData();
   }, []);
 
+  /**
+   * Hàm load dữ liệu dashboard từ các API
+   * Gọi đồng thời 3 API: clubs, requests, accounts
+   */
+  const loadDashboardData = async () => {
+    setLoading(true);
+    try {
+      // Load data from available APIs
+      const [clubsResponse, requestsResponse, accountsResponse] = await Promise.all([
+        clubsAPI.getAll().catch(() => ({ data: [] })),
+        clubLeaderRequestAPI.getPending().catch(() => ({ data: [] })),
+        accountsAPI.getAll().catch(() => ({ data: [] }))
+      ]);
+
+      const clubs = clubsResponse.data || [];
+      const requests = requestsResponse.data || [];
+      const accounts = accountsResponse.data || [];
+      
+      // TODO: Backend chưa có API revenue
+      // const revenueResponse = await clubsAPI.getAllRevenue().catch(() => ({ data: { total: 0 } }));
+      const revenue = 0; // revenueResponse.data?.total || 0;
+
+      setStats({
+        totalClubs: clubs.length || 0,
+        activeClubs: clubs.filter(c => c.isActive).length || 0,
+        totalAccounts: accounts.length || 0,
+        pendingRequests: requests.length || 0,
+        totalRevenue: revenue
+      });
+    } catch (error) {
+      // Silent fail for dashboard data loading
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * Hàm format số tiền theo định dạng VND
+   * @param {number} amount - Số tiền cần format
+   * @returns {string} - Chuỗi đã format (ví dụ: "1.000.000 ₫")
+   */
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
@@ -52,8 +84,12 @@ const Dashboard = () => {
     }).format(amount);
   };
 
-  const iconXl = getIconSize('2xl'); // 48x48 for stat cards
+  const iconXl = getIconSize('2xl');
 
+  /**
+   * Mảng cấu hình các card thống kê
+   * Mỗi card hiển thị một chỉ số quan trọng với icon và link đến trang chi tiết
+   */
   const statsCards = [
     {
       title: 'Tổng số CLB',
@@ -64,107 +100,47 @@ const Dashboard = () => {
       link: '/admin/clubs'
     },
     {
-      title: 'Tổng thành viên',
-      value: stats.totalMembers,
-      subtitle: 'Thành viên đang hoạt động',
-      icon: <UsersIcon style={iconXl} />,
+      title: 'Tổng tài khoản',
+      value: stats.totalAccounts,
+      subtitle: 'Tất cả tài khoản hệ thống',
+      icon: <UserCircleIcon style={iconXl} />,
       color: '#52c41a',
-      link: '/admin/members'
+      link: '/admin/accounts'
     },
     {
-      title: 'Yêu cầu chờ duyệt',
+      title: 'Yêu cầu Club Leader',
       value: stats.pendingRequests,
-      subtitle: 'Đơn gia nhập mới',
+      subtitle: 'Chờ duyệt',
       icon: <DocumentTextIcon style={iconXl} />,
       color: '#faad14',
       link: '/admin/requests'
     },
     {
-      title: 'Tổng doanh thu',
+      title: 'Tổng doanh thu phí',
       value: formatCurrency(stats.totalRevenue),
-      subtitle: `${stats.pendingFees} phí chưa thanh toán`,
+      subtitle: 'Tất cả câu lạc bộ',
       icon: <CurrencyDollarIcon style={iconXl} />,
-      color: '#722ed1',
-      link: '/admin/fees'
+      color: '#52c41a',
+      link: '/admin/clubs'
     }
   ];
-
-  const iconMd = getIconSize('md');
-  const iconSm = getIconSize('sm');
-  const recentRequests = joinRequests.slice(0, 5);
-  const recentFees = fees.slice(0, 5);
-
-  const requestColumns = [
-    {
-      title: 'Sinh viên',
-      dataIndex: 'fullName',
-      key: 'fullName'
-    },
-    {
-      title: 'CLB',
-      dataIndex: 'clubName',
-      key: 'clubName'
-    },
-    {
-      title: 'Ngày yêu cầu',
-      dataIndex: 'requestDate',
-      key: 'requestDate',
-      render: (date) => new Date(date).toLocaleDateString('vi-VN')
-    },
-    {
-      title: 'Trạng thái',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status) => {
-        const statusConfig = {
-          pending: { color: 'orange', text: 'Chờ duyệt' },
-          approved: { color: 'green', text: 'Đã duyệt' },
-          rejected: { color: 'red', text: 'Từ chối' }
-        };
-        const config = statusConfig[status] || statusConfig.pending;
-        return <Tag color={config.color}>{config.text}</Tag>;
-      }
-    }
-  ];
-
-  const feeColumns = [
-    {
-      title: 'Thành viên',
-      dataIndex: 'memberName',
-      key: 'memberName'
-    },
-    {
-      title: 'CLB',
-      dataIndex: 'clubName',
-      key: 'clubName'
-    },
-    {
-      title: 'Số tiền',
-      dataIndex: 'amount',
-      key: 'amount',
-      render: (amount) => formatCurrency(amount)
-    },
-    {
-      title: 'Trạng thái',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status) => {
-        const statusConfig = {
-          completed: { color: 'green', text: 'Đã thanh toán' },
-          pending: { color: 'orange', text: 'Chờ thanh toán' },
-          overdue: { color: 'red', text: 'Quá hạn' }
-        };
-        const config = statusConfig[status] || statusConfig.pending;
-        return <Tag color={config.color}>{config.text}</Tag>;
-      }
-    }
-  ];
+  if (loading) {
+    return (
+      <div className="dashboard" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+        <Spin size="large">
+          <div style={{ padding: '50px' }}>
+            <Text>Đang tải dữ liệu...</Text>
+          </div>
+        </Spin>
+      </div>
+    );
+  }
 
   return (
-    <div className="dashboard" style={{ maxWidth: '100%', overflowX: 'hidden' }}>
-      <div className="dashboard-header animate-fade-in">
-        <Title level={2}>Trang chủ - Tổng quan hệ thống</Title>
-        <Text type="secondary">Chào mừng bạn đến với hệ thống quản lý câu lạc bộ sinh viên</Text>
+    <div className="dashboard">
+      <div className="dashboard-header" style={{ marginBottom: 24 }}>
+        <Title level={2}>Trang chủ - Quản trị hệ thống</Title>
+        <Text type="secondary">Tổng quan và thống kê hệ thống quản lý câu lạc bộ sinh viên</Text>
       </div>
 
       {/* Stats Cards */}
@@ -174,10 +150,9 @@ const Dashboard = () => {
             <Link to={stat.link}>
               <Card
                 hoverable
-                className="stat-card card-hover animate-scale-in"
+                className="stat-card"
                 style={{ 
-                  borderLeft: `4px solid ${stat.color}`,
-                  animationDelay: `${index * 0.1}s`
+                  borderLeft: `4px solid ${stat.color}`
                 }}
               >
                 <Space size="large" style={{ width: '100%' }}>
@@ -196,91 +171,57 @@ const Dashboard = () => {
         ))}
       </Row>
 
-      {/* Recent Activities */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={24} lg={12}>
-          <Card
-            title={
+      {/* Quick Actions */}
+      <Row gutter={[16, 16]}>
+        <Col xs={24} md={8}>
+          <Link to="/admin/accounts">
+            <Card
+              hoverable
+              style={{ height: '100%', minHeight: '120px' }}
+            >
               <Space>
-                <DocumentTextIcon style={iconMd} />
-                <span>Yêu cầu gia nhập gần đây</span>
+                <UserCircleIcon style={iconXl} />
+                <div>
+                  <Title level={4} style={{ margin: 0 }}>Quản lý Tài khoản</Title>
+                  <Text type="secondary">Phân quyền và quản lý người dùng</Text>
+                </div>
               </Space>
-            }
-            extra={<Link to="/admin/requests">Xem tất cả →</Link>}
-            className="card-hover animate-slide-up"
-          >
-            <Table
-              dataSource={recentRequests}
-              columns={requestColumns}
-              pagination={false}
-              size="small"
-              rowKey="id"
-            />
-          </Card>
+            </Card>
+          </Link>
         </Col>
-        <Col xs={24} lg={12}>
-          <Card
-            title={
+        <Col xs={24} md={8}>
+          <Link to="/admin/requests">
+            <Card
+              hoverable
+              style={{ height: '100%', minHeight: '120px' }}
+            >
               <Space>
-                <CurrencyDollarIcon style={iconMd} />
-                <span>Thanh toán phí gần đây</span>
+                <DocumentTextIcon style={iconXl} />
+                <div>
+                  <Title level={4} style={{ margin: 0 }}>Duyệt yêu cầu</Title>
+                  <Text type="secondary">Xét duyệt Club Leader</Text>
+                </div>
               </Space>
-            }
-            extra={<Link to="/admin/fees">Xem tất cả →</Link>}
-            className="card-hover animate-slide-up"
-          >
-            <Table
-              dataSource={recentFees}
-              columns={feeColumns}
-              pagination={false}
-              size="small"
-              rowKey="id"
-            />
-          </Card>
+            </Card>
+          </Link>
+        </Col>
+        <Col xs={24} md={8}>
+          <Link to="/admin/clubs">
+            <Card
+              hoverable
+              style={{ height: '100%', minHeight: '120px' }}
+            >
+              <Space>
+                <BuildingOfficeIcon style={iconXl} />
+                <div>
+                  <Title level={4} style={{ margin: 0 }}>Giám sát CLB</Title>
+                  <Text type="secondary">Quản lý câu lạc bộ</Text>
+                </div>
+              </Space>
+            </Card>
+          </Link>
         </Col>
       </Row>
-
-      {/* Quick Actions */}
-      <Card 
-        title={
-          <Space>
-            <ChartBarIcon style={iconMd} />
-            <span>Thao tác nhanh</span>
-          </Space>
-        }
-        className="animate-fade-in"
-      >
-        <Row gutter={[16, 16]}>
-          <Col xs={24} sm={12} md={6}>
-            <Link to="/admin/clubs/new">
-              <Button type="primary" block icon={<PlusIcon style={iconSm} />} size="large">
-                Thêm CLB mới
-              </Button>
-            </Link>
-          </Col>
-          <Col xs={24} sm={12} md={6}>
-            <Link to="/admin/members/new">
-              <Button type="primary" block icon={<UserPlusIcon style={iconSm} />} size="large">
-                Thêm thành viên
-              </Button>
-            </Link>
-          </Col>
-          <Col xs={24} sm={12} md={6}>
-            <Link to="/admin/requests">
-              <Button type="default" block icon={<CheckBadgeIcon style={iconSm} />} size="large">
-                Duyệt yêu cầu
-              </Button>
-            </Link>
-          </Col>
-          <Col xs={24} sm={12} md={6}>
-            <Link to="/admin/reports">
-              <Button type="default" block icon={<ChartBarIcon style={iconSm} />} size="large">
-                Xem báo cáo
-              </Button>
-            </Link>
-          </Col>
-        </Row>
-      </Card>
     </div>
   );
 };

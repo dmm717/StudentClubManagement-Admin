@@ -11,7 +11,8 @@ import {
   Bars3Icon,
   XMarkIcon,
   ArrowRightOnRectangleIcon,
-  UserIcon
+  UserIcon,
+  CalendarIcon
 } from '@heroicons/react/24/outline';
 import { showConfirm } from '../utils/notifications';
 import { getIconSize } from '../utils/iconSizes';
@@ -46,29 +47,24 @@ const AdminLayout = () => {
       label: 'Trang chủ'
     },
     {
-      key: '/admin/clubs',
-      icon: <BuildingOfficeIcon style={iconSize} />,
-      label: 'Quản lý CLB'
-    },
-    {
-      key: '/admin/members',
-      icon: <UsersIcon style={iconSize} />,
-      label: 'Quản lý thành viên'
-    },
-    {
       key: '/admin/requests',
       icon: <DocumentTextIcon style={iconSize} />,
-      label: 'Duyệt yêu cầu'
+      label: 'Duyệt yêu cầu Leader'
     },
     {
-      key: '/admin/fees',
-      icon: <CurrencyDollarIcon style={iconSize} />,
-      label: 'Quản lý phí'
+      key: '/admin/clubs',
+      icon: <BuildingOfficeIcon style={iconSize} />,
+      label: 'Giám sát CLB'
     },
     {
-      key: '/admin/reports',
-      icon: <ChartBarIcon style={iconSize} />,
-      label: 'Báo cáo'
+      key: '/admin/activities',
+      icon: <CalendarIcon style={iconSize} />,
+      label: 'Quản lý Hoạt động'
+    },
+    {
+      key: '/admin/accounts',
+      icon: <UsersIcon style={iconSize} />,
+      label: 'Quản lý Tài khoản'
     }
   ];
 

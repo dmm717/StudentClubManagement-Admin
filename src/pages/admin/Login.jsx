@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Form, Input, Button, Card, Typography, Space } from 'antd';
 import { UserIcon, LockClosedIcon, AcademicCapIcon } from '@heroicons/react/24/outline';
-import { adminUser } from '../../data/mockData';
+import { authAPI } from '../../services/api';
 import { showError, showSuccess } from '../../utils/notifications';
 import { getIconSize } from '../../utils/iconSizes';
 import loginBackgroundImg from '../../assets/images/login-background.jpg';
@@ -10,6 +10,10 @@ import './Login.css';
 
 const { Title, Text } = Typography;
 
+/**
+ * Component Login - Trang đăng nhập cho admin
+ * Chức năng: Xác thực admin, lưu token, kiểm tra quyền admin
+ */
 const Login = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
@@ -21,21 +25,50 @@ const Login = () => {
   // Fallback to public folder if import fails
   const backgroundImage = loginBackgroundImg || '/login-background.jpg';
 
+  /**
+   * Hàm xử lý submit form đăng nhập
+   * API: POST /api/auth/login
+   * - Kiểm tra user có role admin
+   * - Lưu token và thông tin user vào localStorage
+   * - Redirect đến dashboard nếu thành công
+   * @param {object} values - Giá trị từ form (username, password)
+   */
   const handleSubmit = async (values) => {
     setLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      if (values.username === adminUser.username && values.password === adminUser.password) {
-        localStorage.setItem('adminUser', JSON.stringify(adminUser));
-        showSuccess('Đăng nhập thành công!', 'Chào mừng trở lại').then(() => {
-          navigate('/admin/dashboard');
-        });
-      } else {
-        showError('Tên đăng nhập hoặc mật khẩu không đúng!', 'Đăng nhập thất bại');
+    try {
+      const response = await authAPI.login(values.username, values.password);
+      const { token, accountId, username, email, fullName, roles } = response.data;
+      
+      // Check if user has admin role (case-insensitive)
+      const hasAdminRole = roles.some(role => role.toLowerCase() === 'admin');
+      if (!hasAdminRole) {
+        showError('Bạn không có quyền truy cập trang quản trị!', 'Không có quyền');
+        setLoading(false);
+        return;
       }
+      
+      // Store token and user info
+      localStorage.setItem('token', token);
+      localStorage.setItem('adminUser', JSON.stringify({
+        accountId,
+        username,
+        email,
+        fullName,
+        roles
+      }));
+      
+      showSuccess('Đăng nhập thành công!', 'Chào mừng trở lại').then(() => {
+        navigate('/admin/dashboard');
+      });
+    } catch (error) {
+      showError(
+        error.response?.data?.message || 'Tên đăng nhập hoặc mật khẩu không đúng!', 
+        'Đăng nhập thất bại'
+      );
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   return (
@@ -98,7 +131,7 @@ const Login = () => {
 
           <div className="login-info">
             <Text type="secondary" style={{ fontSize: 12 }}>
-              Demo: username: <strong>admin</strong> / password: <strong>admin123</strong>
+              Đăng nhập với tài khoản quản trị viên
             </Text>
           </div>
         </Card>

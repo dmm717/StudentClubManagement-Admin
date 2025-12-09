@@ -1,0 +1,39 @@
+.accounts-page {
+  padding: 24px;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  color: white;
+}
+
+.page-header h2 {
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .accounts-page {
+    padding: 16px;
+  }
+  
+  .header-icon {
+    width: 48px;
+    height: 48px;
+  }
+}
