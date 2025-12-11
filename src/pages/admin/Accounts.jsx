@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Card, Table, Input, Select, Button, Space, Tag, Typography, Row, Col, Statistic, Modal, Form, Switch } from 'antd';
+import { Card, Table, Input, Select, Button, Space, Tag, Typography, Row, Col, Statistic, Modal, Form, Switch, Descriptions } from 'antd';
 import {
   UserCircleIcon,
   MagnifyingGlassIcon,
   LockClosedIcon,
   LockOpenIcon,
   KeyIcon,
-  ShieldCheckIcon
+  ShieldCheckIcon,
+  EyeIcon
 } from '@heroicons/react/24/outline';
 import { accountsAPI } from '../../services/api';
 import { showSuccess, showError, showConfirm } from '../../utils/notifications';
@@ -32,7 +33,9 @@ const Accounts = () => {
   // State quản lý modal
   const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
   const [showRoleModal, setShowRoleModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState(null);
+  const [accountDetail, setAccountDetail] = useState(null);
   
   // Form instances
   const [resetPasswordForm] = Form.useForm();
@@ -137,6 +140,25 @@ const Accounts = () => {
       resetPasswordForm.resetFields();
     } catch (error) {
       showError('Không thể reset mật khẩu!');
+    }
+  };
+
+  /**
+   * Hàm xem chi tiết tài khoản
+   * API: GET /api/admin/accounts/{id}
+   * @param {object} account - Tài khoản cần xem chi tiết
+   */
+  const handleViewDetail = async (account) => {
+    setSelectedAccount(account);
+    setShowDetailModal(true);
+    try {
+      // Gọi API để lấy thông tin chi tiết tài khoản
+      const response = await accountsAPI.getById(account.id);
+      setAccountDetail(response.data);
+    } catch (error) {
+      showError('Không thể tải thông tin chi tiết tài khoản!');
+      // Nếu không lấy được chi tiết, sử dụng dữ liệu từ danh sách
+      setAccountDetail(account);
     }
   };
 
@@ -268,9 +290,16 @@ const Accounts = () => {
     {
       title: 'Hành động',
       key: 'actions',
-      width: 280,
+      width: 320,
       render: (_, record) => (
         <Space size="small" wrap>
+          <Button
+            size="small"
+            onClick={() => handleViewDetail(record)}
+            icon={<EyeIcon style={iconSm} />}
+          >
+            Xem
+          </Button>
           <Button
             size="small"
             type="primary"
@@ -372,18 +401,18 @@ const Accounts = () => {
             <Col xs={24} sm={12} lg={8}>
               <Space.Compact style={{ width: '100%' }}>
                 <Input
-                  placeholder="Tìm kiếm tên, email..."
-                  allowClear
-                  size="large"
+                placeholder="Tìm kiếm tên, email..."
+                allowClear
+                size="large"
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => setSearchTerm(e.target.value)}
                   onPressEnter={(e) => setSearchTerm(e.target.value)}
                 />
                 <Button 
                   size="large" 
                   icon={<MagnifyingGlassIcon style={iconSm} />}
                   onClick={() => {}}
-                />
+              />
               </Space.Compact>
             </Col>
             <Col xs={24} sm={12} lg={4}>
@@ -471,6 +500,77 @@ const Accounts = () => {
             </Space>
           </Form.Item>
         </Form>
+      </Modal>
+
+      {/* Account Detail Modal */}
+      <Modal
+        title="Chi tiết tài khoản"
+        open={showDetailModal}
+        onCancel={() => {
+          setShowDetailModal(false);
+          setAccountDetail(null);
+        }}
+        footer={[
+          <Button key="close" onClick={() => {
+            setShowDetailModal(false);
+            setAccountDetail(null);
+          }}>
+            Đóng
+          </Button>
+        ]}
+        width={700}
+      >
+        {accountDetail && (
+          <Descriptions bordered column={1}>
+            <Descriptions.Item label="Tên đăng nhập">
+              <strong>{accountDetail.username || accountDetail.Username}</strong>
+            </Descriptions.Item>
+            <Descriptions.Item label="Họ tên">
+              {accountDetail.fullName || accountDetail.FullName || 'Chưa có'}
+            </Descriptions.Item>
+            <Descriptions.Item label="Email">
+              {accountDetail.email || accountDetail.Email || 'Chưa có'}
+            </Descriptions.Item>
+            <Descriptions.Item label="Số điện thoại">
+              {accountDetail.phone || accountDetail.Phone || 'Chưa có'}
+            </Descriptions.Item>
+            <Descriptions.Item label="Vai trò">
+              <Space wrap size="small">
+                {(accountDetail.roles || accountDetail.Roles || []).map(role => {
+                  const roleLower = role.toLowerCase();
+                  let color = 'green';
+                  let label = 'Student';
+                  
+                  if (roleLower === 'admin') {
+                    color = 'red';
+                    label = 'Admin';
+                  } else if (roleLower === 'clubleader' || roleLower === 'club_leader') {
+                    color = 'blue';
+                    label = 'Club Leader';
+                  } else if (roleLower === 'student') {
+                    color = 'green';
+                    label = 'Student';
+                  }
+                  
+                  return (
+                    <Tag key={role} color={color}>
+                      {label}
+                    </Tag>
+                  );
+                })}
+                {(!accountDetail.roles || accountDetail.roles.length === 0) && 
+                 (!accountDetail.Roles || accountDetail.Roles.length === 0) && (
+                  <Text type="secondary">Chưa có vai trò</Text>
+                )}
+              </Space>
+            </Descriptions.Item>
+            <Descriptions.Item label="Trạng thái">
+              <Tag color={(accountDetail.isActive || accountDetail.IsActive) ? 'success' : 'error'}>
+                {(accountDetail.isActive || accountDetail.IsActive) ? 'Hoạt động' : 'Bị khóa'}
+              </Tag>
+            </Descriptions.Item>
+          </Descriptions>
+        )}
       </Modal>
 
       {/* Manage Roles Modal */}

@@ -183,13 +183,13 @@ const Requests = () => {
           <Col xs={24}>
             <Space.Compact style={{ width: '100%' }}>
               <Input
-                placeholder="Tìm kiếm theo tên, email, mã sinh viên..."
-                allowClear
-                size="large"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Tìm kiếm theo tên, email, mã sinh viên..."
+              allowClear
+              size="large"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
                 onPressEnter={(e) => setSearchTerm(e.target.value)}
-              />
+            />
               <Button 
                 size="large" 
                 icon={<MagnifyingGlassIcon style={iconSm} />}
@@ -313,7 +313,10 @@ const Requests = () => {
               {selectedRequest.account?.username || 'N/A'}
             </Descriptions.Item>
             <Descriptions.Item label="Email">
-              {selectedRequest.account?.email || 'N/A'}
+              {selectedRequest.account?.email || selectedRequest.account?.Email || 'N/A'}
+            </Descriptions.Item>
+            <Descriptions.Item label="Số điện thoại">
+              {selectedRequest.account?.phone || selectedRequest.account?.Phone || 'Chưa có'}
             </Descriptions.Item>
             <Descriptions.Item label="Ngày yêu cầu">
               {new Date(selectedRequest.requestDate).toLocaleDateString('vi-VN')}

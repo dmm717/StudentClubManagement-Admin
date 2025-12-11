@@ -133,7 +133,7 @@ const Clubs = () => {
         });
         setShowDetailModal(true);
       } else {
-        showError(error.response?.data?.message || 'Không thể tải thông tin câu lạc bộ!');
+      showError(error.response?.data?.message || 'Không thể tải thông tin câu lạc bộ!');
       }
     }
   };
@@ -247,7 +247,7 @@ const Clubs = () => {
         return (
           <Tag color={isActive ? 'green' : 'red'}>
             {isActive ? 'Hoạt động' : 'Bị khóa'}
-          </Tag>
+        </Tag>
         );
       }
     },
@@ -358,18 +358,18 @@ const Clubs = () => {
           <Col xs={24} sm={16}>
             <Space.Compact style={{ width: '100%' }}>
               <Input
-                placeholder="Tìm kiếm theo tên CLB..."
-                allowClear
-                size="large"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Tìm kiếm theo tên CLB..."
+              allowClear
+              size="large"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
                 onPressEnter={(e) => setSearchTerm(e.target.value)}
               />
               <Button 
                 size="large" 
                 icon={<MagnifyingGlassIcon style={iconSm} />}
                 onClick={() => {}}
-              />
+            />
             </Space.Compact>
           </Col>
           <Col xs={24} sm={8}>
