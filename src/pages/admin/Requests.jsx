@@ -24,8 +24,11 @@ const { Option } = Select;
 const Requests = () => {
   // State quản lý danh sách yêu cầu
   const [requests, setRequests] = useState([]);
+  const [processedRequests, setProcessedRequests] = useState([]); // Gộp đã duyệt và từ chối
   const [loading, setLoading] = useState(false);
+  const [loadingProcessed, setLoadingProcessed] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchTermProcessed, setSearchTermProcessed] = useState('');
   
   // State quản lý modal
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -36,6 +39,8 @@ const Requests = () => {
   // Load danh sách yêu cầu khi component mount
   useEffect(() => {
     loadPendingRequests();
+    // TODO: Gọi API để load danh sách đã duyệt và từ chối khi có API
+    // loadProcessedRequests();
   }, []);
 
   /**
@@ -79,12 +84,49 @@ const Requests = () => {
   };
 
   /**
+   * TODO: Hàm load danh sách yêu cầu đã xử lý (đã duyệt + từ chối)
+   * API: Cần thêm API endpoint để lấy danh sách này
+   * Ví dụ: GET /api/club-leader-requests/processed hoặc gọi 2 API riêng
+   */
+  const loadProcessedRequests = async () => {
+    setLoadingProcessed(true);
+    try {
+      // TODO: Gọi API khi có
+      // const response = await clubLeaderRequestAPI.getProcessed();
+      // hoặc
+      // const [approved, rejected] = await Promise.all([
+      //   clubLeaderRequestAPI.getApproved(),
+      //   clubLeaderRequestAPI.getRejected()
+      // ]);
+      // const processed = [...approved, ...rejected];
+      // setProcessedRequests(processed);
+      setProcessedRequests([]);
+    } catch (error) {
+      console.error('Error loading processed requests:', error);
+      setProcessedRequests([]);
+    } finally {
+      setLoadingProcessed(false);
+    }
+  };
+
+  /**
    * Hàm filter danh sách requests theo search term
    * Tìm kiếm theo tên, username, email, hoặc accountId
    */
   const filteredRequests = requests.filter(request => {
     if (!searchTerm) return true;
     const searchLower = searchTerm.toLowerCase();
+    return (
+      request.account?.fullName?.toLowerCase().includes(searchLower) ||
+      request.account?.username?.toLowerCase().includes(searchLower) ||
+      request.account?.email?.toLowerCase().includes(searchLower) ||
+      request.accountId?.toString().includes(searchLower)
+    );
+  });
+
+  const filteredProcessedRequests = processedRequests.filter(request => {
+    if (!searchTermProcessed) return true;
+    const searchLower = searchTermProcessed.toLowerCase();
     return (
       request.account?.fullName?.toLowerCase().includes(searchLower) ||
       request.account?.username?.toLowerCase().includes(searchLower) ||
@@ -116,6 +158,8 @@ const Requests = () => {
         showSuccess('Đã duyệt yêu cầu thành công! Tài khoản club leader đã được tạo.');
         setShowDetailModal(false);
         loadPendingRequests();  // Reload danh sách sau khi duyệt
+        // TODO: Reload danh sách đã xử lý khi có API
+        // loadProcessedRequests();
       } catch (error) {
         showError(error.response?.data?.message || 'Không thể duyệt yêu cầu!');
       }
@@ -140,6 +184,8 @@ const Requests = () => {
       showSuccess('Đã từ chối yêu cầu!');
       setShowRejectModal(false);
       loadPendingRequests();  // Reload danh sách sau khi từ chối
+      // TODO: Reload danh sách đã xử lý khi có API
+      // loadProcessedRequests();
     } catch (error) {
       showError('Không thể từ chối yêu cầu!');
     }
@@ -165,7 +211,7 @@ const Requests = () => {
 
       {/* Request Stats */}
       <Row gutter={16} style={{ marginBottom: 24 }} className="animate-slide-up">
-        <Col xs={24}>
+        <Col xs={24} sm={8}>
           <Card className="card-hover">
             <Statistic
               title="Yêu cầu chờ duyệt"
@@ -175,110 +221,251 @@ const Requests = () => {
             />
           </Card>
         </Col>
+        <Col xs={24} sm={8}>
+          <Card className="card-hover">
+            <Statistic
+              title="Yêu cầu đã duyệt"
+              value={processedRequests.filter(r => r.status === 'approved').length}
+              prefix={<CheckCircleIcon style={iconMd} />}
+              valueStyle={{ color: '#52c41a' }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={8}>
+          <Card className="card-hover">
+            <Statistic
+              title="Yêu cầu từ chối"
+              value={processedRequests.filter(r => r.status === 'rejected').length}
+              prefix={<XCircleIcon style={iconMd} />}
+              valueStyle={{ color: '#ff4d4f' }}
+            />
+          </Card>
+        </Col>
       </Row>
 
-      {/* Filters */}
-      <Card style={{ marginBottom: 24 }} className="animate-slide-up">
-        <Row gutter={16}>
-          <Col xs={24}>
-            <Space.Compact style={{ width: '100%' }}>
-              <Input
-              placeholder="Tìm kiếm theo tên, email, mã sinh viên..."
-              allowClear
-              size="large"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-                onPressEnter={(e) => setSearchTerm(e.target.value)}
-            />
-              <Button 
-                size="large" 
-                icon={<MagnifyingGlassIcon style={iconSm} />}
-                onClick={() => {}}
-              />
-            </Space.Compact>
-          </Col>
-        </Row>
-      </Card>
-
-      {/* Requests Grid */}
-      <Row gutter={[16, 16]}>
-        {loading ? (
-          <Col span={24}>
-            <Card loading={true} style={{ minHeight: 200 }} />
-          </Col>
-        ) : filteredRequests.length > 0 ? (
-          filteredRequests.map((request) => (
-            <Col xs={24} sm={12} lg={8} key={request.id}>
-              <Card
-                hoverable
-                className="request-card pending"
-                actions={[
-                  <Button
-                    type="link"
-                    icon={<EyeIcon style={iconSm} />}
-                    onClick={() => handleViewDetail(request)}
-                  >
-                    Chi tiết
-                  </Button>,
-                  <Button
-                    type="link"
-                    danger
-                    icon={<XCircleIcon style={iconSm} />}
-                    onClick={() => handleReject(request)}
-                  >
-                    Từ chối
-                  </Button>,
-                  <Button
-                    type="link"
-                    style={{ color: '#52c41a' }}
-                    icon={<CheckCircleIcon style={iconSm} />}
-                    onClick={() => handleApprove(request)}
-                  >
-                    Duyệt
-                  </Button>
-                ]}
-              >
-                <div style={{ marginBottom: 16 }}>
-                  <Title level={4} style={{ margin: 0 }}>
-                    {request.account?.fullName || 'N/A'}
-                  </Title>
-                  <Text type="secondary">
-                    {request.account?.username || `ID: ${request.accountId}`}
-                  </Text>
-                </div>
-                <Space direction="vertical" size="small" style={{ width: '100%' }}>
-                  <div>
-                    <Text type="secondary">Email: </Text>
-                    <Text>{request.account?.email || 'N/A'}</Text>
-                  </div>
-                  <div>
-                    <Text type="secondary">Ngày yêu cầu: </Text>
-                    <Text>
-                      {new Date(request.requestDate).toLocaleDateString('vi-VN')}
-                    </Text>
-                  </div>
-                  <div>
-                    <Tag color="orange">Chờ duyệt</Tag>
-                  </div>
-                </Space>
-                {request.reason && (
-                  <div style={{ marginTop: 12, padding: 12, background: '#f5f5f5', borderRadius: 4 }}>
-                    <Text type="secondary" style={{ fontSize: 12 }}>Lý do:</Text>
-                    <Text style={{ display: 'block', marginTop: 4 }}>{request.reason}</Text>
-                  </div>
-                )}
-              </Card>
-            </Col>
-          ))
-        ) : (
-          <Col span={24}>
-            <Card>
-              <div style={{ textAlign: 'center', padding: 40 }}>
-                <Text type="secondary">Không có yêu cầu chờ duyệt</Text>
-              </div>
+      {/* Two Column Layout: Pending và Processed */}
+      <Row gutter={[24, 24]}>
+        {/* Left Column: Yêu cầu chờ duyệt */}
+        <Col xs={24} lg={12}>
+          <div>
+            <Title level={3} style={{ marginBottom: 16 }}>
+              <ClockIcon style={{ ...iconMd, marginRight: 8, color: '#faad14' }} />
+              Yêu cầu chờ duyệt
+            </Title>
+            
+            {/* Search for Pending */}
+            <Card style={{ marginBottom: 24 }}>
+              <Space.Compact style={{ width: '100%' }}>
+                <Input
+                  placeholder="Tìm kiếm yêu cầu chờ duyệt..."
+                  allowClear
+                  size="large"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onPressEnter={(e) => setSearchTerm(e.target.value)}
+                />
+                <Button 
+                  size="large" 
+                  icon={<MagnifyingGlassIcon style={iconSm} />}
+                  onClick={() => {}}
+                />
+              </Space.Compact>
             </Card>
-          </Col>
-        )}
+
+            {/* Pending Requests Grid */}
+            <Row gutter={[16, 16]}>
+              {loading ? (
+                <Col span={24}>
+                  <Card loading={true} style={{ minHeight: 200 }} />
+                </Col>
+              ) : filteredRequests.length > 0 ? (
+                filteredRequests.map((request) => (
+                  <Col xs={24} key={request.id}>
+                    <Card
+                      hoverable
+                      className="request-card pending"
+                      actions={[
+                        <Button
+                          type="link"
+                          icon={<EyeIcon style={iconSm} />}
+                          onClick={() => handleViewDetail(request)}
+                        >
+                          Chi tiết
+                        </Button>,
+                        <Button
+                          type="link"
+                          danger
+                          icon={<XCircleIcon style={iconSm} />}
+                          onClick={() => handleReject(request)}
+                        >
+                          Từ chối
+                        </Button>,
+                        <Button
+                          type="link"
+                          style={{ color: '#52c41a' }}
+                          icon={<CheckCircleIcon style={iconSm} />}
+                          onClick={() => handleApprove(request)}
+                        >
+                          Duyệt
+                        </Button>
+                      ]}
+                    >
+                      <div style={{ marginBottom: 16 }}>
+                        <Title level={4} style={{ margin: 0 }}>
+                          {request.account?.fullName || 'N/A'}
+                        </Title>
+                        <Text type="secondary">
+                          {request.account?.username || `ID: ${request.accountId}`}
+                        </Text>
+                      </div>
+                      <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                        <div>
+                          <Text type="secondary">Email: </Text>
+                          <Text>{request.account?.email || 'N/A'}</Text>
+                        </div>
+                        <div>
+                          <Text type="secondary">Ngày yêu cầu: </Text>
+                          <Text>
+                            {new Date(request.requestDate).toLocaleDateString('vi-VN')}
+                          </Text>
+                        </div>
+                        <div>
+                          <Tag color="orange">Chờ duyệt</Tag>
+                        </div>
+                      </Space>
+                      {request.reason && (
+                        <div style={{ marginTop: 12, padding: 12, background: '#f5f5f5', borderRadius: 4 }}>
+                          <Text type="secondary" style={{ fontSize: 12 }}>Lý do:</Text>
+                          <Text style={{ display: 'block', marginTop: 4 }}>{request.reason}</Text>
+                        </div>
+                      )}
+                    </Card>
+                  </Col>
+                ))
+              ) : (
+                <Col span={24}>
+                  <Card>
+                    <div style={{ textAlign: 'center', padding: 40 }}>
+                      <Text type="secondary">Không có yêu cầu chờ duyệt</Text>
+                    </div>
+                  </Card>
+                </Col>
+              )}
+            </Row>
+          </div>
+        </Col>
+
+        {/* Right Column: Yêu cầu đã xử lý */}
+        <Col xs={24} lg={12}>
+          <div>
+            <Title level={3} style={{ marginBottom: 16 }}>
+              <DocumentTextIcon style={{ ...iconMd, marginRight: 8 }} />
+              Yêu cầu đã xử lý
+            </Title>
+            
+            {/* Search for Processed */}
+            <Card style={{ marginBottom: 24 }}>
+              <Space.Compact style={{ width: '100%' }}>
+                <Input
+                  placeholder="Tìm kiếm yêu cầu đã xử lý..."
+                  allowClear
+                  size="large"
+                  value={searchTermProcessed}
+                  onChange={(e) => setSearchTermProcessed(e.target.value)}
+                />
+                <Button 
+                  size="large" 
+                  icon={<MagnifyingGlassIcon style={iconSm} />}
+                />
+              </Space.Compact>
+            </Card>
+
+            {/* Processed Requests Grid */}
+            <Row gutter={[16, 16]}>
+              {loadingProcessed ? (
+                <Col span={24}>
+                  <Card loading={true} style={{ minHeight: 200 }} />
+                </Col>
+              ) : filteredProcessedRequests.length > 0 ? (
+                filteredProcessedRequests.map((request) => (
+                  <Col xs={24} key={request.id}>
+                    <Card
+                      hoverable
+                      className={`request-card ${request.status === 'approved' ? 'approved' : 'rejected'}`}
+                      actions={[
+                        <Button
+                          type="link"
+                          icon={<EyeIcon style={iconSm} />}
+                          onClick={() => handleViewDetail(request)}
+                        >
+                          Chi tiết
+                        </Button>
+                      ]}
+                    >
+                      <div style={{ marginBottom: 16 }}>
+                        <Title level={4} style={{ margin: 0 }}>
+                          {request.account?.fullName || request.fullName || 'N/A'}
+                        </Title>
+                        <Text type="secondary">
+                          {request.account?.username || request.username || `ID: ${request.accountId}`}
+                        </Text>
+                      </div>
+                      <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                        <div>
+                          <Text type="secondary">Email: </Text>
+                          <Text>{request.account?.email || request.email || 'N/A'}</Text>
+                        </div>
+                        <div>
+                          <Text type="secondary">Ngày yêu cầu: </Text>
+                          <Text>
+                            {new Date(request.requestDate).toLocaleDateString('vi-VN')}
+                          </Text>
+                        </div>
+                        {request.processedAt && (
+                          <div>
+                            <Text type="secondary">
+                              {request.status === 'approved' ? 'Ngày duyệt: ' : 'Ngày từ chối: '}
+                            </Text>
+                            <Text>
+                              {new Date(request.processedAt).toLocaleDateString('vi-VN')}
+                            </Text>
+                          </div>
+                        )}
+                        <div>
+                          {request.status === 'approved' ? (
+                            <Tag color="green">Đã duyệt</Tag>
+                          ) : (
+                            <Tag color="red">Đã từ chối</Tag>
+                          )}
+                        </div>
+                      </Space>
+                      {request.reason && (
+                        <div style={{ marginTop: 12, padding: 12, background: '#f5f5f5', borderRadius: 4 }}>
+                          <Text type="secondary" style={{ fontSize: 12 }}>Lý do:</Text>
+                          <Text style={{ display: 'block', marginTop: 4 }}>{request.reason}</Text>
+                        </div>
+                      )}
+                      {request.status === 'rejected' && request.note && request.note !== 'Rejected' && (
+                        <div style={{ marginTop: 12, padding: 12, background: '#fff1f0', borderRadius: 4 }}>
+                          <Text type="secondary" style={{ fontSize: 12 }}>Lý do từ chối:</Text>
+                          <Text style={{ display: 'block', marginTop: 4, color: '#ff4d4f' }}>{request.note}</Text>
+                        </div>
+                      )}
+                    </Card>
+                  </Col>
+                ))
+              ) : (
+                <Col span={24}>
+                  <Card>
+                    <div style={{ textAlign: 'center', padding: 40 }}>
+                      <Text type="secondary">Không có yêu cầu đã xử lý</Text>
+                    </div>
+                  </Card>
+                </Col>
+              )}
+            </Row>
+          </div>
+        </Col>
       </Row>
 
       {/* Detail Modal */}
