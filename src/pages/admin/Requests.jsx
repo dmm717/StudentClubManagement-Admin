@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Card, Input, Select, Button, Space, Tag, Typography, Row, Col, Statistic, Modal, Descriptions, Form } from 'antd';
+import { Card, Input, Select, Button, Space, Tag, Typography, Row, Col, Statistic, Modal, Descriptions, Form, Table } from 'antd';
 import {
   DocumentTextIcon,
   MagnifyingGlassIcon,
@@ -30,6 +30,14 @@ const Requests = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchTermProcessed, setSearchTermProcessed] = useState('');
   
+  // State quản lý thống kê
+  const [stats, setStats] = useState({
+    totalApproved: 0,
+    totalRejected: 0,
+    totalPending: 0,
+    total: 0
+  });
+  
   // State quản lý modal
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
@@ -39,8 +47,8 @@ const Requests = () => {
   // Load danh sách yêu cầu khi component mount
   useEffect(() => {
     loadPendingRequests();
-    // TODO: Gọi API để load danh sách đã duyệt và từ chối khi có API
-    // loadProcessedRequests();
+    loadProcessedRequests();
+    loadStats();
   }, []);
 
   /**
@@ -84,28 +92,65 @@ const Requests = () => {
   };
 
   /**
-   * TODO: Hàm load danh sách yêu cầu đã xử lý (đã duyệt + từ chối)
-   * API: Cần thêm API endpoint để lấy danh sách này
-   * Ví dụ: GET /api/club-leader-requests/processed hoặc gọi 2 API riêng
+   * Hàm load danh sách yêu cầu đã xử lý (đã duyệt + từ chối)
+   * API: GET /api/admin/accounts/leader-requests/approved
+   *      GET /api/admin/accounts/leader-requests/rejected
    */
   const loadProcessedRequests = async () => {
     setLoadingProcessed(true);
     try {
-      // TODO: Gọi API khi có
-      // const response = await clubLeaderRequestAPI.getProcessed();
-      // hoặc
-      // const [approved, rejected] = await Promise.all([
-      //   clubLeaderRequestAPI.getApproved(),
-      //   clubLeaderRequestAPI.getRejected()
-      // ]);
-      // const processed = [...approved, ...rejected];
-      // setProcessedRequests(processed);
-      setProcessedRequests([]);
+      const [approvedResponse, rejectedResponse] = await Promise.all([
+        clubLeaderRequestAPI.getApproved().catch(() => ({ data: [] })),
+        clubLeaderRequestAPI.getRejected().catch(() => ({ data: [] }))
+      ]);
+      
+      const approved = Array.isArray(approvedResponse.data) ? approvedResponse.data : [];
+      const rejected = Array.isArray(rejectedResponse.data) ? rejectedResponse.data : [];
+      
+      // Fetch account details for each processed request
+      const processedWithAccounts = await Promise.all(
+        [...approved, ...rejected].map(async (request) => {
+          try {
+            const accountResponse = await accountsAPI.getById(request.accountId);
+            return {
+              ...request,
+              account: accountResponse.data
+            };
+          } catch (error) {
+            return {
+              ...request,
+              account: null
+            };
+          }
+        })
+      );
+      
+      setProcessedRequests(processedWithAccounts);
     } catch (error) {
       console.error('Error loading processed requests:', error);
       setProcessedRequests([]);
     } finally {
       setLoadingProcessed(false);
+    }
+  };
+
+  /**
+   * Hàm load thống kê yêu cầu leader
+   * API: GET /api/admin/accounts/leader-requests/stats
+   */
+  const loadStats = async () => {
+    try {
+      const response = await clubLeaderRequestAPI.getStats();
+      if (response.data) {
+        setStats({
+          totalApproved: response.data.totalApproved || 0,
+          totalRejected: response.data.totalRejected || 0,
+          totalPending: response.data.totalPending || 0,
+          total: response.data.total || 0
+        });
+      }
+    } catch (error) {
+      console.error('Error loading stats:', error);
     }
   };
 
@@ -157,9 +202,12 @@ const Requests = () => {
         await clubLeaderRequestAPI.approve(request.id);
         showSuccess('Đã duyệt yêu cầu thành công! Tài khoản club leader đã được tạo.');
         setShowDetailModal(false);
-        loadPendingRequests();  // Reload danh sách sau khi duyệt
-        // TODO: Reload danh sách đã xử lý khi có API
-        // loadProcessedRequests();
+        // Reload tất cả dữ liệu sau khi duyệt
+        await Promise.all([
+          loadPendingRequests(),
+          loadProcessedRequests(),
+          loadStats()
+        ]);
       } catch (error) {
         showError(error.response?.data?.message || 'Không thể duyệt yêu cầu!');
       }
@@ -183,9 +231,12 @@ const Requests = () => {
       await clubLeaderRequestAPI.reject(selectedRequest.id, values.rejectReason || '');
       showSuccess('Đã từ chối yêu cầu!');
       setShowRejectModal(false);
-      loadPendingRequests();  // Reload danh sách sau khi từ chối
-      // TODO: Reload danh sách đã xử lý khi có API
-      // loadProcessedRequests();
+      // Reload tất cả dữ liệu sau khi từ chối
+      await Promise.all([
+        loadPendingRequests(),
+        loadProcessedRequests(),
+        loadStats()
+      ]);
     } catch (error) {
       showError('Không thể từ chối yêu cầu!');
     }
@@ -195,7 +246,6 @@ const Requests = () => {
   const iconMd = getIconSize('md');
   const iconLg = getIconSize('lg');
   const iconXl = getIconSize('xl');
-  const pendingCount = requests.length;
 
   return (
     <div className="requests-page animate-fade-in" style={{ maxWidth: '100%', overflowX: 'hidden' }}>
@@ -215,7 +265,7 @@ const Requests = () => {
           <Card className="card-hover">
             <Statistic
               title="Yêu cầu chờ duyệt"
-              value={pendingCount}
+              value={stats.totalPending}
               prefix={<ClockIcon style={iconMd} />}
               valueStyle={{ color: '#faad14' }}
             />
@@ -225,7 +275,7 @@ const Requests = () => {
           <Card className="card-hover">
             <Statistic
               title="Yêu cầu đã duyệt"
-              value={processedRequests.filter(r => r.status === 'approved').length}
+              value={stats.totalApproved}
               prefix={<CheckCircleIcon style={iconMd} />}
               valueStyle={{ color: '#52c41a' }}
             />
@@ -235,7 +285,7 @@ const Requests = () => {
           <Card className="card-hover">
             <Statistic
               title="Yêu cầu từ chối"
-              value={processedRequests.filter(r => r.status === 'rejected').length}
+              value={stats.totalRejected}
               prefix={<XCircleIcon style={iconMd} />}
               valueStyle={{ color: '#ff4d4f' }}
             />
@@ -243,10 +293,10 @@ const Requests = () => {
         </Col>
       </Row>
 
-      {/* Two Column Layout: Pending và Processed */}
-      <Row gutter={[24, 24]}>
-        {/* Left Column: Yêu cầu chờ duyệt */}
-        <Col xs={24} lg={12}>
+      {/* Vertical Layout: Pending trên, Processed dưới */}
+      <Row gutter={[0, 24]}>
+        {/* Top Section: Yêu cầu chờ duyệt */}
+        <Col xs={24}>
           <div>
             <Title level={3} style={{ marginBottom: 16 }}>
               <ClockIcon style={{ ...iconMd, marginRight: 8, color: '#faad14' }} />
@@ -272,91 +322,106 @@ const Requests = () => {
               </Space.Compact>
             </Card>
 
-            {/* Pending Requests Grid */}
-            <Row gutter={[16, 16]}>
-              {loading ? (
-                <Col span={24}>
-                  <Card loading={true} style={{ minHeight: 200 }} />
-                </Col>
-              ) : filteredRequests.length > 0 ? (
-                filteredRequests.map((request) => (
-                  <Col xs={24} key={request.id}>
-                    <Card
-                      hoverable
-                      className="request-card pending"
-                      actions={[
+            {/* Pending Requests Table */}
+            <Card>
+              <Table
+                columns={[
+                  {
+                    title: 'STT',
+                    key: 'stt',
+                    width: 70,
+                    align: 'center',
+                    render: (_, __, index) => index + 1,
+                  },
+                  {
+                    title: 'NGÀY GỬI',
+                    key: 'requestDate',
+                    width: 160,
+                    render: (_, record) => {
+                      const date = new Date(record.requestDate);
+                      return (
+                        <div>
+                          <div style={{ fontWeight: 500 }}>{date.toLocaleDateString('vi-VN')}</div>
+                          <div style={{ fontSize: '12px', color: '#8c8c8c', marginTop: '2px' }}>
+                            {date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                          </div>
+                        </div>
+                      );
+                    },
+                  },
+                  {
+                    title: 'LÝ DO',
+                    key: 'reason',
+                    ellipsis: {
+                      showTitle: true,
+                    },
+                    render: (_, record) => record.reason || '—',
+                  },
+                  {
+                    title: 'TRẠNG THÁI',
+                    key: 'status',
+                    width: 130,
+                    align: 'center',
+                    render: () => (
+                      <Tag color="orange" style={{ borderRadius: '12px', padding: '4px 14px', fontSize: '13px' }}>
+                        Đang chờ
+                      </Tag>
+                    ),
+                  },
+                  {
+                    title: 'HÀNH ĐỘNG',
+                    key: 'actions',
+                    width: 280,
+                    align: 'center',
+                    fixed: 'right',
+                    render: (_, record) => (
+                      <Space size="small" wrap>
                         <Button
-                          type="link"
-                          icon={<EyeIcon style={iconSm} />}
-                          onClick={() => handleViewDetail(request)}
-                        >
-                          Chi tiết
-                        </Button>,
-                        <Button
-                          type="link"
-                          danger
-                          icon={<XCircleIcon style={iconSm} />}
-                          onClick={() => handleReject(request)}
-                        >
-                          Từ chối
-                        </Button>,
-                        <Button
-                          type="link"
-                          style={{ color: '#52c41a' }}
+                          type="primary"
+                          size="small"
                           icon={<CheckCircleIcon style={iconSm} />}
-                          onClick={() => handleApprove(request)}
+                          onClick={() => handleApprove(record)}
                         >
                           Duyệt
                         </Button>
-                      ]}
-                    >
-                      <div style={{ marginBottom: 16 }}>
-                        <Title level={4} style={{ margin: 0 }}>
-                          {request.account?.fullName || 'N/A'}
-                        </Title>
-                        <Text type="secondary">
-                          {request.account?.username || `ID: ${request.accountId}`}
-                        </Text>
-                      </div>
-                      <Space direction="vertical" size="small" style={{ width: '100%' }}>
-                        <div>
-                          <Text type="secondary">Email: </Text>
-                          <Text>{request.account?.email || 'N/A'}</Text>
-                        </div>
-                        <div>
-                          <Text type="secondary">Ngày yêu cầu: </Text>
-                          <Text>
-                            {new Date(request.requestDate).toLocaleDateString('vi-VN')}
-                          </Text>
-                        </div>
-                        <div>
-                          <Tag color="orange">Chờ duyệt</Tag>
-                        </div>
+                        <Button
+                          danger
+                          size="small"
+                          icon={<XCircleIcon style={iconSm} />}
+                          onClick={() => handleReject(record)}
+                        >
+                          Từ chối
+                        </Button>
+                        <Button
+                          size="small"
+                          icon={<EyeIcon style={iconSm} />}
+                          onClick={() => handleViewDetail(record)}
+                        >
+                          Chi tiết
+                        </Button>
                       </Space>
-                      {request.reason && (
-                        <div style={{ marginTop: 12, padding: 12, background: '#f5f5f5', borderRadius: 4 }}>
-                          <Text type="secondary" style={{ fontSize: 12 }}>Lý do:</Text>
-                          <Text style={{ display: 'block', marginTop: 4 }}>{request.reason}</Text>
-                        </div>
-                      )}
-                    </Card>
-                  </Col>
-                ))
-              ) : (
-                <Col span={24}>
-                  <Card>
-                    <div style={{ textAlign: 'center', padding: 40 }}>
-                      <Text type="secondary">Không có yêu cầu chờ duyệt</Text>
-                    </div>
-                  </Card>
-                </Col>
-              )}
-            </Row>
+                    ),
+                  },
+                ]}
+                dataSource={filteredRequests}
+                rowKey="id"
+                loading={loading}
+                scroll={{ x: 'max-content' }}
+                pagination={{
+                  pageSize: 10,
+                  showSizeChanger: true,
+                  showTotal: (total) => `Tổng ${total} yêu cầu`,
+                }}
+                locale={{
+                  emptyText: 'Không có yêu cầu chờ duyệt'
+                }}
+              />
+            </Card>
           </div>
         </Col>
 
-        {/* Right Column: Yêu cầu đã xử lý */}
-        <Col xs={24} lg={12}>
+        {/* Bottom Section: Yêu cầu đã xử lý */}
+        <Col xs={24}>
           <div>
             <Title level={3} style={{ marginBottom: 16 }}>
               <DocumentTextIcon style={{ ...iconMd, marginRight: 8 }} />
@@ -380,90 +445,99 @@ const Requests = () => {
               </Space.Compact>
             </Card>
 
-            {/* Processed Requests Grid */}
-            <Row gutter={[16, 16]}>
-              {loadingProcessed ? (
-                <Col span={24}>
-                  <Card loading={true} style={{ minHeight: 200 }} />
-                </Col>
-              ) : filteredProcessedRequests.length > 0 ? (
-                filteredProcessedRequests.map((request) => (
-                  <Col xs={24} key={request.id}>
-                    <Card
-                      hoverable
-                      className={`request-card ${request.status === 'approved' ? 'approved' : 'rejected'}`}
-                      actions={[
-                        <Button
-                          type="link"
-                          icon={<EyeIcon style={iconSm} />}
-                          onClick={() => handleViewDetail(request)}
-                        >
-                          Chi tiết
-                        </Button>
-                      ]}
-                    >
-                      <div style={{ marginBottom: 16 }}>
-                        <Title level={4} style={{ margin: 0 }}>
-                          {request.account?.fullName || request.fullName || 'N/A'}
-                        </Title>
-                        <Text type="secondary">
-                          {request.account?.username || request.username || `ID: ${request.accountId}`}
-                        </Text>
-                      </div>
-                      <Space direction="vertical" size="small" style={{ width: '100%' }}>
+            {/* Processed Requests Table */}
+            <Card>
+              <Table
+                columns={[
+                  {
+                    title: 'STT',
+                    key: 'stt',
+                    width: 70,
+                    align: 'center',
+                    render: (_, __, index) => index + 1,
+                  },
+                  {
+                    title: 'NGÀY GỬI',
+                    key: 'requestDate',
+                    width: 160,
+                    render: (_, record) => {
+                      const date = new Date(record.requestDate);
+                      return (
                         <div>
-                          <Text type="secondary">Email: </Text>
-                          <Text>{request.account?.email || request.email || 'N/A'}</Text>
-                        </div>
-                        <div>
-                          <Text type="secondary">Ngày yêu cầu: </Text>
-                          <Text>
-                            {new Date(request.requestDate).toLocaleDateString('vi-VN')}
-                          </Text>
-                        </div>
-                        {request.processedAt && (
-                          <div>
-                            <Text type="secondary">
-                              {request.status === 'approved' ? 'Ngày duyệt: ' : 'Ngày từ chối: '}
-                            </Text>
-                            <Text>
-                              {new Date(request.processedAt).toLocaleDateString('vi-VN')}
-                            </Text>
+                          <div style={{ fontWeight: 500 }}>{date.toLocaleDateString('vi-VN')}</div>
+                          <div style={{ fontSize: '12px', color: '#8c8c8c', marginTop: '2px' }}>
+                            {date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                           </div>
-                        )}
-                        <div>
-                          {request.status === 'approved' ? (
-                            <Tag color="green">Đã duyệt</Tag>
-                          ) : (
-                            <Tag color="red">Đã từ chối</Tag>
-                          )}
                         </div>
-                      </Space>
-                      {request.reason && (
-                        <div style={{ marginTop: 12, padding: 12, background: '#f5f5f5', borderRadius: 4 }}>
-                          <Text type="secondary" style={{ fontSize: 12 }}>Lý do:</Text>
-                          <Text style={{ display: 'block', marginTop: 4 }}>{request.reason}</Text>
-                        </div>
-                      )}
-                      {request.status === 'rejected' && request.note && request.note !== 'Rejected' && (
-                        <div style={{ marginTop: 12, padding: 12, background: '#fff1f0', borderRadius: 4 }}>
-                          <Text type="secondary" style={{ fontSize: 12 }}>Lý do từ chối:</Text>
-                          <Text style={{ display: 'block', marginTop: 4, color: '#ff4d4f' }}>{request.note}</Text>
-                        </div>
-                      )}
-                    </Card>
-                  </Col>
-                ))
-              ) : (
-                <Col span={24}>
-                  <Card>
-                    <div style={{ textAlign: 'center', padding: 40 }}>
-                      <Text type="secondary">Không có yêu cầu đã xử lý</Text>
-                    </div>
-                  </Card>
-                </Col>
-              )}
-            </Row>
+                      );
+                    },
+                  },
+                  {
+                    title: 'LÝ DO',
+                    key: 'reason',
+                    ellipsis: {
+                      showTitle: true,
+                    },
+                    render: (_, record) => record.reason || '—',
+                  },
+                  {
+                    title: 'TRẠNG THÁI',
+                    key: 'status',
+                    width: 130,
+                    align: 'center',
+                    render: (_, record) => {
+                      const status = record.status?.toLowerCase();
+                      if (status === 'approved') {
+                        return (
+                          <Tag color="green" style={{ borderRadius: '12px', padding: '4px 14px', fontSize: '13px' }}>
+                            Đã duyệt
+                          </Tag>
+                        );
+                      } else if (status === 'rejected') {
+                        return (
+                          <Tag color="red" style={{ borderRadius: '12px', padding: '4px 14px', fontSize: '13px' }}>
+                            Đã từ chối
+                          </Tag>
+                        );
+                      }
+                      return (
+                        <Tag color="orange" style={{ borderRadius: '12px', padding: '4px 14px', fontSize: '13px' }}>
+                          Đang chờ
+                        </Tag>
+                      );
+                    },
+                  },
+                  {
+                    title: 'GHI CHÚ',
+                    key: 'note',
+                    ellipsis: {
+                      showTitle: true,
+                    },
+                    render: (_, record) => {
+                      if (record.status?.toLowerCase() === 'rejected' && record.note && record.note !== 'Rejected') {
+                        return record.note;
+                      }
+                      if (record.status?.toLowerCase() === 'approved' && record.note && record.note !== 'Đã duyệt') {
+                        return record.note;
+                      }
+                      return '—';
+                    },
+                  },
+                ]}
+                dataSource={filteredProcessedRequests}
+                rowKey="id"
+                loading={loadingProcessed}
+                scroll={{ x: 'max-content' }}
+                pagination={{
+                  pageSize: 10,
+                  showSizeChanger: true,
+                  showTotal: (total) => `Tổng ${total} yêu cầu`,
+                }}
+                locale={{
+                  emptyText: 'Không có yêu cầu đã xử lý'
+                }}
+              />
+            </Card>
           </div>
         </Col>
       </Row>

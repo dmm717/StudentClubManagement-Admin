@@ -243,7 +243,8 @@ const Clubs = () => {
       key: 'status',
       width: 120,
       render: (_, record) => {
-        const isActive = record.status === 'active' || record.status === 'Active';
+        const statusLower = (record.status || '').toLowerCase();
+        const isActive = statusLower === 'active';
         return (
           <Tag color={isActive ? 'green' : 'red'}>
             {isActive ? 'Hoạt động' : 'Bị khóa'}
@@ -447,8 +448,8 @@ const Clubs = () => {
               </Text>
             </Descriptions.Item>
             <Descriptions.Item label="Trạng thái">
-              <Tag color={(selectedClub.status === 'active' || selectedClub.status === 'Active') ? 'green' : 'red'}>
-                {(selectedClub.status === 'active' || selectedClub.status === 'Active') ? 'Hoạt động' : 'Bị khóa'}
+              <Tag color={((selectedClub.status || '').toLowerCase() === 'active') ? 'green' : 'red'}>
+                {((selectedClub.status || '').toLowerCase() === 'active') ? 'Hoạt động' : 'Bị khóa'}
               </Tag>
             </Descriptions.Item>
           </Descriptions>
