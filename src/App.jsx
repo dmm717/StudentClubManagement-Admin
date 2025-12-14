@@ -7,6 +7,7 @@ import Clubs from './pages/admin/Clubs';
 import Requests from './pages/admin/Requests';
 import Accounts from './pages/admin/Accounts';
 import Activities from './pages/admin/Activities';
+import Reports from './pages/admin/Reports';
 import './App.css';
 
 // Protected Route Component
@@ -46,6 +47,7 @@ function App() {
           <Route path="requests" element={<Requests />} />
           <Route path="accounts" element={<Accounts />} />
           <Route path="activities" element={<Activities />} />
+          <Route path="reports" element={<Reports />} />
         </Route>
       </Routes>
       </Router>

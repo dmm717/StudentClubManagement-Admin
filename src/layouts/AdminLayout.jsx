@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Layout, Menu, Button, Avatar, Typography, Space } from 'antd';
+import { Layout, Menu, Button, Avatar, Typography, Space, Badge } from 'antd';
 import {
   HomeIcon,
   BuildingOfficeIcon,
@@ -16,6 +16,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { showConfirm } from '../utils/notifications';
 import { getIconSize } from '../utils/iconSizes';
+import { clubLeaderRequestAPI } from '../services/api';
 import './AdminLayout.css';
 
 const { Header, Sider, Content } = Layout;
@@ -23,8 +24,37 @@ const { Text } = Typography;
 
 const AdminLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
+  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Load pending requests count
+  useEffect(() => {
+    const loadPendingCount = async () => {
+      try {
+        const response = await clubLeaderRequestAPI.getPending();
+        const requestsData = Array.isArray(response.data) ? response.data : [];
+        setPendingRequestsCount(requestsData.length);
+      } catch (error) {
+        console.error('Error loading pending requests count:', error);
+      }
+    };
+
+    loadPendingCount();
+    // Reload count every 15 seconds
+    const interval = setInterval(loadPendingCount, 15000);
+
+    // Listen for requestProcessed event from Requests page
+    const handleRequestProcessed = () => {
+      loadPendingCount();
+    };
+    window.addEventListener('requestProcessed', handleRequestProcessed);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('requestProcessed', handleRequestProcessed);
+    };
+  }, []);
 
   const handleLogout = async () => {
     const result = await showConfirm('Bạn có chắc chắn muốn đăng xuất?', 'Xác nhận đăng xuất');
@@ -49,7 +79,32 @@ const AdminLayout = () => {
     {
       key: '/admin/requests',
       icon: <DocumentTextIcon style={iconSize} />,
-      label: 'Duyệt yêu cầu Leader'
+      label: (
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between', 
+          width: '100%',
+          paddingRight: '8px'
+        }}>
+          <span style={{ flex: 1 }}>Duyệt yêu cầu Leader</span>
+          {pendingRequestsCount > 0 && (
+            <Badge 
+              count={pendingRequestsCount} 
+              style={{ 
+                backgroundColor: '#ff4d4f',
+                marginLeft: '8px',
+                boxShadow: '0 0 0 1px #fff',
+                fontSize: '12px',
+                height: '20px',
+                lineHeight: '20px',
+                minWidth: '20px',
+                borderRadius: '10px'
+              }}
+            />
+          )}
+        </div>
+      )
     },
     {
       key: '/admin/clubs',
@@ -65,6 +120,11 @@ const AdminLayout = () => {
       key: '/admin/accounts',
       icon: <UsersIcon style={iconSize} />,
       label: 'Quản lý Tài khoản'
+    },
+    {
+      key: '/admin/reports',
+      icon: <ChartBarIcon style={iconSize} />,
+      label: 'Báo cáo tổng hợp'
     }
   ];
 
@@ -74,7 +134,7 @@ const AdminLayout = () => {
         trigger={null}
         collapsible
         collapsed={collapsed}
-        width={250}
+        width={280}
         collapsedWidth={80}
         className={`admin-sidebar ${collapsed ? 'collapsed' : ''}`}
         style={{
@@ -141,7 +201,7 @@ const AdminLayout = () => {
       <Layout 
         className="main-layout"
         style={{ 
-          marginLeft: collapsed ? 80 : 250,
+          marginLeft: collapsed ? 80 : 280,
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           maxWidth: '100%',
           overflow: 'hidden',

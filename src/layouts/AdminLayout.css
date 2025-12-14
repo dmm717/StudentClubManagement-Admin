@@ -147,7 +147,8 @@
   line-height: 48px !important;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
   position: relative;
-  overflow: hidden;
+  overflow: visible !important;
+  padding-right: 16px !important;
 }
 
 .sidebar-menu .ant-menu-item::before {
@@ -179,6 +180,8 @@
 .sidebar-menu .ant-menu-item .ant-menu-title-content {
   font-weight: 500;
   letter-spacing: 0.3px;
+  overflow: visible !important;
+  width: 100% !important;
 }
 
 .sidebar-footer {

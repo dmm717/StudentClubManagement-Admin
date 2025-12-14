@@ -46,14 +46,17 @@ const Clubs = () => {
   const loadClubs = async () => {
     setLoading(true);
     try {
-      // Backend: GET /api/clubs returns array directly
+      // Backend: GET /api/clubs returns array directly with monitoring info (memberCount, totalRevenue)
       const clubsResponse = await clubsAPI.getAll();
-      setClubs(clubsResponse.data || []);
+      const clubsData = clubsResponse.data || [];
+      setClubs(clubsData);
       
-      // TODO: Backend chưa có API này - tạm thời set 0
-      // const revenueResponse = await clubsAPI.getAllRevenue();
-      // setTotalRevenue(revenueResponse.data?.total || 0);
-      setTotalRevenue(0);
+      // Tính tổng doanh thu từ tất cả các club (backend đã trả về totalRevenue cho mỗi club)
+      const totalRev = clubsData.reduce((sum, club) => {
+        const revenue = club.totalRevenue || club.TotalRevenue || 0;
+        return sum + revenue;
+      }, 0);
+      setTotalRevenue(totalRev);
     } catch (error) {
       showError(error.response?.data?.message || 'Không thể tải danh sách câu lạc bộ!');
     } finally {
@@ -120,7 +123,8 @@ const Clubs = () => {
           : (detailData.membershipFee !== null && detailData.membershipFee !== undefined)
           ? detailData.membershipFee
           : detailData.MembershipFee,
-        revenue: 0 // TODO: Backend chưa có API revenue - tạm thời set 0
+        // Lấy revenue từ danh sách (backend đã có API trả về totalRevenue)
+        revenue: listData.totalRevenue || listData.TotalRevenue || detailData.totalRevenue || detailData.TotalRevenue || 0
       });
       setShowDetailModal(true);
     } catch (error) {
@@ -129,7 +133,7 @@ const Clubs = () => {
       if (clubFromList) {
         setSelectedClub({
           ...clubFromList,
-          revenue: 0
+          revenue: clubFromList.totalRevenue || clubFromList.TotalRevenue || 0
         });
         setShowDetailModal(true);
       } else {
@@ -227,8 +231,9 @@ const Clubs = () => {
       align: 'right',
       width: 150,
       render: (_, record) => {
-        // Revenue will be loaded per club if needed
-        return <Text strong>{formatCurrency(record.revenue || 0)}</Text>;
+        // Lấy totalRevenue từ backend (hỗ trợ cả camelCase và PascalCase)
+        const revenue = record.totalRevenue || record.TotalRevenue || 0;
+        return <Text strong>{formatCurrency(revenue)}</Text>;
       }
     },
     {

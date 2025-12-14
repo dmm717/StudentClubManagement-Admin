@@ -208,6 +208,8 @@ const Requests = () => {
           loadProcessedRequests(),
           loadStats()
         ]);
+        // Dispatch event to notify AdminLayout to update badge count
+        window.dispatchEvent(new CustomEvent('requestProcessed'));
       } catch (error) {
         showError(error.response?.data?.message || 'Không thể duyệt yêu cầu!');
       }
@@ -237,6 +239,8 @@ const Requests = () => {
         loadProcessedRequests(),
         loadStats()
       ]);
+      // Dispatch event to notify AdminLayout to update badge count
+      window.dispatchEvent(new CustomEvent('requestProcessed'));
     } catch (error) {
       showError('Không thể từ chối yêu cầu!');
     }
@@ -342,9 +346,6 @@ const Requests = () => {
                       return (
                         <div>
                           <div style={{ fontWeight: 500 }}>{date.toLocaleDateString('vi-VN')}</div>
-                          <div style={{ fontSize: '12px', color: '#8c8c8c', marginTop: '2px' }}>
-                            {date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                          </div>
                         </div>
                       );
                     },
@@ -465,9 +466,6 @@ const Requests = () => {
                       return (
                         <div>
                           <div style={{ fontWeight: 500 }}>{date.toLocaleDateString('vi-VN')}</div>
-                          <div style={{ fontSize: '12px', color: '#8c8c8c', marginTop: '2px' }}>
-                            {date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                          </div>
                         </div>
                       );
                     },
