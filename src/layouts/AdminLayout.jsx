@@ -17,6 +17,7 @@ import {
 import { showConfirm } from '../utils/notifications';
 import { getIconSize } from '../utils/iconSizes';
 import { clubLeaderRequestAPI } from '../services/api';
+import { NotificationBell } from '../components/NotificationBell';
 import './AdminLayout.css';
 
 const { Header, Sider, Content } = Layout;
@@ -213,9 +214,10 @@ const AdminLayout = () => {
             <Typography.Title level={4} style={{ margin: 0, color: '#fff', fontSize: '18px', fontWeight: 600 }}>
               Hệ thống Quản lý Câu lạc bộ Sinh viên
             </Typography.Title>
-            <Space>
-              <Avatar icon={<UserIcon style={getIconSize('sm')} />} />
-              <Text style={{ color: '#fff', fontSize: '14px' }}>Quản trị viên</Text>
+            <Space align="center" size="middle">
+              <NotificationBell />
+              <Avatar icon={<UserIcon style={getIconSize('sm')} />} style={{ display: 'flex', alignItems: 'center' }} />
+              <Text style={{ color: '#fff', fontSize: '14px', lineHeight: '32px' }}>Quản trị viên</Text>
             </Space>
           </div>
         </Header>

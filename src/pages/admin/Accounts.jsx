@@ -346,9 +346,6 @@ const Accounts = () => {
     <div className="accounts-page">
       <div className="page-header">
         <div className="header-content">
-          <div className="header-icon">
-            <UserCircleIcon style={iconXl} />
-          </div>
           <div>
             <Title level={2}>Quản lý Tài khoản</Title>
             <Text type="secondary">Quản lý thông tin tài khoản, phân quyền và trạng thái</Text>

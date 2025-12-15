@@ -297,9 +297,6 @@ const Clubs = () => {
     <div className="clubs-page">
       <div className="page-header" style={{ marginBottom: 24 }}>
         <div className="header-content">
-          <div className="header-icon">
-            <BuildingOfficeIcon style={iconXl} />
-          </div>
           <div>
             <Title level={2}>Giám sát Câu lạc bộ</Title>
             <Text type="secondary">Xem danh sách CLB, trạng thái, số thành viên và quản lý</Text>

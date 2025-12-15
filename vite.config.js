@@ -12,5 +12,19 @@ export default defineConfig({
         secure: false,
       }
     }
+  },
+  build: {
+    target: 'es2015',
+    minify: 'esbuild',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor': ['react', 'react-dom', 'react-router-dom'],
+          'antd': ['antd'],
+          'signalr': ['@microsoft/signalr']
+        }
+      }
+    },
+    chunkSizeWarningLimit: 600
   }
 })

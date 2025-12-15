@@ -301,9 +301,6 @@ const Activities = () => {
     <div className="activities-page">
       <div className="page-header" style={{ marginBottom: 24 }}>
         <div className="header-content">
-          <div className="header-icon">
-            <CalendarIcon style={iconXl} />
-          </div>
           <div>
             <Title level={2}>Quản lý Hoạt động</Title>
             <Text type="secondary">Xem và quản lý tất cả hoạt động của các câu lạc bộ</Text>

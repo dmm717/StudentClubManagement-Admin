@@ -1,14 +1,16 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ConfigProvider } from 'antd';
-import AdminLayout from './layouts/AdminLayout';
-import Login from './pages/admin/Login';
-import Dashboard from './pages/admin/Dashboard';
-import Clubs from './pages/admin/Clubs';
-import Requests from './pages/admin/Requests';
-import Accounts from './pages/admin/Accounts';
-import Activities from './pages/admin/Activities';
-import Reports from './pages/admin/Reports';
+import { ConfigProvider, Spin } from 'antd';
 import './App.css';
+
+const AdminLayout = lazy(() => import('./layouts/AdminLayout'));
+const Login = lazy(() => import('./pages/admin/Login'));
+const Dashboard = lazy(() => import('./pages/admin/Dashboard'));
+const Clubs = lazy(() => import('./pages/admin/Clubs'));
+const Requests = lazy(() => import('./pages/admin/Requests'));
+const Accounts = lazy(() => import('./pages/admin/Accounts'));
+const Activities = lazy(() => import('./pages/admin/Activities'));
+const Reports = lazy(() => import('./pages/admin/Reports'));
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -25,6 +27,7 @@ function App() {
           v7_relativeSplatPath: true,
         }}
       >
+      <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><Spin size="large" /></div>}>
       <Routes>
         {/* Redirect root to admin login */}
         <Route path="/" element={<Navigate to="/admin/login" />} />
@@ -50,6 +53,7 @@ function App() {
           <Route path="reports" element={<Reports />} />
         </Route>
       </Routes>
+      </Suspense>
       </Router>
     </ConfigProvider>
   );
