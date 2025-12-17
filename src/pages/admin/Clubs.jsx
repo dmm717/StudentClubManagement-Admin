@@ -428,6 +428,14 @@ const Clubs = () => {
                 {selectedClub.description || <Text type="secondary" italic>Chưa có mô tả</Text>}
               </div>
             </Descriptions.Item>
+            <Descriptions.Item label="Club Leader">
+              {selectedClub.leaderFullName ||
+               selectedClub.leaderName ||
+               selectedClub.clubLeaderName ||
+               selectedClub.leader?.fullName || (
+                <Text type="secondary" italic>Chưa có thông tin</Text>
+              )}
+            </Descriptions.Item>
             <Descriptions.Item label="Ngày thành lập">
               {(selectedClub.establishedDate || selectedClub.EstablishedDate) 
                 ? new Date(selectedClub.establishedDate || selectedClub.EstablishedDate).toLocaleDateString('vi-VN') 
