@@ -285,6 +285,37 @@ const Requests = () => {
   const iconLg = getIconSize('lg');
   const iconXl = getIconSize('xl');
 
+  const statCards = [
+    {
+      title: 'Yêu cầu chờ duyệt',
+      value: stats.totalPending,
+      color: '#faad14',
+      accent: 'rgba(250, 173, 20, 0.12)',
+      icon: ClockIcon,
+    },
+    {
+      title: 'Yêu cầu đã duyệt',
+      value: stats.totalApproved,
+      color: '#52c41a',
+      accent: 'rgba(82, 196, 26, 0.12)',
+      icon: CheckCircleIcon,
+    },
+    {
+      title: 'Yêu cầu từ chối',
+      value: stats.totalRejected,
+      color: '#ff4d4f',
+      accent: 'rgba(255, 77, 79, 0.12)',
+      icon: XCircleIcon,
+    },
+    {
+      title: 'Tổng số yêu cầu',
+      value: stats.total,
+      color: '#1890ff',
+      accent: 'rgba(24, 144, 255, 0.12)',
+      icon: DocumentTextIcon,
+    },
+  ];
+
   return (
     <div className="requests-page animate-fade-in" style={{ maxWidth: '100%', overflowX: 'hidden' }}>
       <div className="page-header animate-slide-up" style={{ marginBottom: 24 }}>
@@ -298,38 +329,24 @@ const Requests = () => {
       </div>
 
       {/* Request Stats */}
-      <Row gutter={16} style={{ marginBottom: 24 }} className="animate-slide-up">
-        <Col xs={24} sm={8}>
-          <Card className="card-hover">
-            <Statistic
-              title="Yêu cầu chờ duyệt"
-              value={stats.totalPending}
-              prefix={<ClockIcon style={iconMd} />}
-              valueStyle={{ color: '#faad14' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={8}>
-          <Card className="card-hover">
-            <Statistic
-              title="Yêu cầu đã duyệt"
-              value={stats.totalApproved}
-              prefix={<CheckCircleIcon style={iconMd} />}
-              valueStyle={{ color: '#52c41a' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={8}>
-          <Card className="card-hover">
-            <Statistic
-              title="Yêu cầu từ chối"
-              value={stats.totalRejected}
-              prefix={<XCircleIcon style={iconMd} />}
-              valueStyle={{ color: '#ff4d4f' }}
-            />
-          </Card>
-        </Col>
-      </Row>
+      <div className="stat-grid animate-slide-up" style={{ marginBottom: 24 }}>
+        {statCards.map((item) => {
+          const Icon = item.icon;
+          return (
+            <Card className="stat-card card-hover" bordered={false} key={item.title}>
+              <div className="stat-icon" style={{ background: item.accent, color: item.color }}>
+                <Icon style={iconMd} />
+              </div>
+              <div className="stat-content">
+                <Text type="secondary">{item.title}</Text>
+                <div className="stat-value" style={{ color: item.color }}>
+                  {item.value}
+                </div>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
 
       {/* Vertical Layout: Pending trên, Processed dưới */}
       <Row gutter={[0, 24]}>

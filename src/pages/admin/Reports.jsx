@@ -228,6 +228,37 @@ const Reports = () => {
     },
   ];
 
+  const statCards = [
+    {
+      title: 'Tổng số CLB',
+      value: summary.totalClubs,
+      color: '#1890ff',
+      accent: 'rgba(24, 144, 255, 0.12)',
+      icon: UsersIcon,
+    },
+    {
+      title: 'Tổng thành viên',
+      value: summary.totalMembers,
+      color: '#52c41a',
+      accent: 'rgba(82, 196, 26, 0.12)',
+      icon: UsersIcon,
+    },
+    {
+      title: 'Tổng hoạt động',
+      value: summary.totalActivities,
+      color: '#faad14',
+      accent: 'rgba(250, 173, 20, 0.12)',
+      icon: CalendarDaysIcon,
+    },
+    {
+      title: 'Tổng doanh thu (VNĐ)',
+      value: summary.totalRevenue.toLocaleString('vi-VN'),
+      color: '#f5222d',
+      accent: 'rgba(245, 34, 45, 0.12)',
+      icon: CurrencyDollarIcon,
+    },
+  ];
+
   return (
     <div className="reports-container">
       {/* Header */}
@@ -297,50 +328,24 @@ const Reports = () => {
       </Card>
 
       {/* Statistics Cards */}
-      <Row gutter={16} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="Tổng số CLB"
-              value={summary.totalClubs}
-              prefix={<UsersIcon style={getIconSize('md')} />}
-              valueStyle={{ color: '#1890ff' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="Tổng thành viên"
-              value={summary.totalMembers}
-              prefix={<UsersIcon style={getIconSize('md')} />}
-              valueStyle={{ color: '#52c41a' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="Tổng hoạt động"
-              value={summary.totalActivities}
-              prefix={<CalendarDaysIcon style={getIconSize('md')} />}
-              valueStyle={{ color: '#faad14' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="Tổng doanh thu"
-              value={summary.totalRevenue}
-              prefix={<CurrencyDollarIcon style={getIconSize('md')} />}
-              suffix="đ"
-              valueStyle={{ color: '#f5222d' }}
-              formatter={(value) => value.toLocaleString('vi-VN')}
-            />
-          </Card>
-        </Col>
-      </Row>
+      <div className="stat-grid" style={{ marginBottom: 24 }}>
+        {statCards.map((item) => {
+          const Icon = item.icon;
+          return (
+            <Card className="stat-card card-hover" bordered={false} key={item.title}>
+              <div className="stat-icon" style={{ background: item.accent, color: item.color }}>
+                <Icon style={getIconSize('md')} />
+              </div>
+              <div className="stat-content">
+                <Text type="secondary">{item.title}</Text>
+                <div className="stat-value" style={{ color: item.color }}>
+                  {item.value}
+                </div>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
 
       {/* Data Table */}
       <Card>

@@ -255,31 +255,36 @@ const Clubs = () => {
         const statusLower = (record.status || '').toLowerCase();
         const isActive = statusLower === 'active';
         return (
-          <Tag color={isActive ? 'green' : 'red'}>
+          <Tag
+            color={isActive ? 'green' : 'red'}
+            style={{ borderRadius: 12, padding: '4px 14px', fontSize: 13 }}
+          >
             {isActive ? 'Hoạt động' : 'Bị khóa'}
-        </Tag>
+          </Tag>
         );
       }
     },
     {
       title: 'Hành động',
       key: 'actions',
-      width: 200,
+      width: 260,
       align: 'center',
       render: (_, record) => (
-        <Space size="small" wrap>
+        <Space size="middle" wrap>
           <Button
-            type="link"
-            size="small"
+            size="middle"
+            type="default"
+            style={{ minWidth: 96, borderRadius: 999 }}
             icon={<EyeIcon style={iconSm} />}
             onClick={() => handleViewDetail(record.id)}
           >
             Xem
           </Button>
           <Button
-            type="link"
-            size="small"
+            size="middle"
+            type="primary"
             danger={record.status === 'active' || record.status === 'Active'}
+            style={{ minWidth: 96, borderRadius: 999 }}
             icon={record.status === 'active' || record.status === 'Active' ? <LockClosedIcon style={iconSm} /> : <LockOpenIcon style={iconSm} />}
             onClick={() => handleToggleStatus(record)}
           >
@@ -340,12 +345,12 @@ const Clubs = () => {
   return (
     <div className="clubs-page animate-fade-in" style={{ maxWidth: '100%', overflowX: 'hidden' }}>
       <div className="page-header animate-slide-up" style={{ marginBottom: 24 }}>
-        <div>
+          <div>
           <Title level={2} style={{ margin: 0 }}>
             <BuildingOfficeIcon style={{ ...iconMd, marginRight: 8, display: 'inline-block', verticalAlign: 'middle' }} />
             Giám sát Câu lạc bộ
           </Title>
-          <Text type="secondary">Xem danh sách CLB, trạng thái, số thành viên và quản lý</Text>
+            <Text type="secondary">Xem danh sách CLB, trạng thái, số thành viên và quản lý</Text>
         </div>
       </div>
 
@@ -364,7 +369,7 @@ const Clubs = () => {
                   {item.display ?? item.value}
                 </div>
               </div>
-            </Card>
+          </Card>
           );
         })}
       </div>
@@ -375,18 +380,18 @@ const Clubs = () => {
           <Col xs={24} sm={16}>
             <Space.Compact style={{ width: '100%' }}>
               <Input
-                placeholder="Tìm kiếm theo tên CLB..."
-                allowClear
-                size="large"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Tìm kiếm theo tên CLB..."
+              allowClear
+              size="large"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
                 onPressEnter={(e) => setSearchTerm(e.target.value)}
               />
               <Button 
                 size="large" 
                 icon={<MagnifyingGlassIcon style={iconSm} />}
                 onClick={() => {}}
-              />
+            />
             </Space.Compact>
           </Col>
           <Col xs={24} sm={8}>

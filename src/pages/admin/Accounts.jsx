@@ -268,7 +268,11 @@ const Accounts = () => {
               }
               
               return (
-                <Tag key={role} color={color}>
+                <Tag
+                  key={role}
+                  color={color}
+                  style={{ borderRadius: 12, padding: '2px 10px', fontSize: 12 }}
+                >
                   {label}
                 </Tag>
               );
@@ -282,7 +286,10 @@ const Accounts = () => {
       key: 'status',
       width: 120,
       render: (_, record) => (
-        <Tag color={record.isActive ? 'success' : 'error'}>
+        <Tag
+          color={record.isActive ? 'green' : 'red'}
+          style={{ borderRadius: 12, padding: '4px 14px', fontSize: 13 }}
+        >
           {record.isActive ? 'Hoạt động' : 'Bị khóa'}
         </Tag>
       ),
@@ -290,36 +297,43 @@ const Accounts = () => {
     {
       title: 'Hành động',
       key: 'actions',
-      width: 320,
+      width: 420,
       render: (_, record) => (
-        <Space size="small" wrap>
+        <Space
+          size="middle"
+          style={{ width: '100%', justifyContent: 'center', flexWrap: 'wrap' }}
+        >
           <Button
-            size="small"
+            size="middle"
+            style={{ minWidth: 96, borderRadius: 999 }}
             onClick={() => handleViewDetail(record)}
             icon={<EyeIcon style={iconSm} />}
           >
             Xem
           </Button>
           <Button
-            size="small"
+            size="middle"
             type="primary"
             ghost={record.isActive}
             danger={record.isActive}
+            style={{ minWidth: 96, borderRadius: 999 }}
             onClick={() => handleToggleStatus(record)}
             icon={record.isActive ? <LockClosedIcon style={iconSm} /> : <LockOpenIcon style={iconSm} />}
           >
             {record.isActive ? 'Khóa' : 'Mở khóa'}
           </Button>
           <Button
-            size="small"
+            size="middle"
+            style={{ minWidth: 96, borderRadius: 999 }}
             onClick={() => handleResetPassword(record)}
             icon={<KeyIcon style={iconSm} />}
           >
-            Reset MK
+            Đặt lại mật khẩu
           </Button>
           <Button
-            size="small"
+            size="middle"
             type="primary"
+            style={{ minWidth: 96, borderRadius: 999 }}
             onClick={() => handleManageRoles(record)}
             icon={<ShieldCheckIcon style={iconSm} />}
           >
@@ -342,102 +356,131 @@ const Accounts = () => {
     student: accounts.filter(a => a.roles?.some(r => r.toLowerCase() === 'student')).length,
   };
 
+  const statCards = [
+    {
+      title: 'Tổng tài khoản',
+      value: stats.total,
+      color: '#1890ff',
+      accent: 'rgba(24, 144, 255, 0.12)'
+    },
+    {
+      title: 'Đang hoạt động',
+      value: stats.active,
+      color: '#52c41a',
+      accent: 'rgba(82, 196, 26, 0.12)'
+    },
+    {
+      title: 'Bị khóa',
+      value: stats.locked,
+      color: '#ff4d4f',
+      accent: 'rgba(255, 77, 79, 0.12)'
+    },
+    {
+      title: 'Tài khoản Admin',
+      value: stats.admin,
+      color: '#722ed1',
+      accent: 'rgba(114, 46, 209, 0.12)'
+    }
+  ];
+
   return (
-    <div className="accounts-page">
-      <div className="page-header">
+    <div className="accounts-page animate-fade-in">
+      <div className="page-header" style={{ marginBottom: 24 }}>
         <div className="header-content">
           <div>
-            <Title level={2}>Quản lý Tài khoản</Title>
-            <Text type="secondary">Quản lý thông tin tài khoản, phân quyền và trạng thái</Text>
+            <Title level={2} style={{ margin: 0 }}>
+              <UserCircleIcon
+                style={{
+                  ...iconMd,
+                  marginRight: 8,
+                  display: 'inline-block',
+                  verticalAlign: 'middle'
+                }}
+              />
+              Quản lý Tài khoản
+            </Title>
+            <Text type="secondary">
+              Quản lý thông tin tài khoản, phân quyền và trạng thái
+            </Text>
           </div>
         </div>
       </div>
 
-      <Row gutter={16} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic 
-              title="Tổng tài khoản" 
-              value={stats.total}
-              valueStyle={{ color: '#1890ff' }}
-            />
+      {/* Stats */}
+      <div className="stat-grid" style={{ marginBottom: 24 }}>
+        {statCards.map((item) => (
+          <Card className="stat-card card-hover" bordered={false} key={item.title}>
+            <div className="stat-icon" style={{ background: item.accent, color: item.color }}>
+              <UserCircleIcon style={iconMd} />
+            </div>
+            <div className="stat-content">
+              <Text type="secondary">{item.title}</Text>
+              <div className="stat-value" style={{ color: item.color }}>
+                {item.value}
+              </div>
+            </div>
           </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic 
-              title="Đang hoạt động" 
-              value={stats.active}
-              valueStyle={{ color: '#52c41a' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic 
-              title="Bị khóa" 
-              value={stats.locked}
-              valueStyle={{ color: '#ff4d4f' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic 
-              title="Club Leader" 
-              value={stats.clubLeader}
-              valueStyle={{ color: '#722ed1' }}
-            />
-          </Card>
-        </Col>
-      </Row>
+        ))}
+      </div>
 
-      <Card>
-        <Space direction="vertical" size="large" style={{ width: '100%' }}>
-          <Row gutter={16}>
-            <Col xs={24} sm={12} lg={8}>
-              <Space.Compact style={{ width: '100%' }}>
-                <Input
+      {/* Filters */}
+      <Card className="filter-card" style={{ marginBottom: 24 }}>
+        <Row gutter={16}>
+          <Col xs={24} sm={12} lg={8}>
+            <Space.Compact style={{ width: '100%' }}>
+              <Input
                 placeholder="Tìm kiếm tên, email..."
                 allowClear
                 size="large"
-                  value={searchTerm}
+                value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                  onPressEnter={(e) => setSearchTerm(e.target.value)}
-                />
-                <Button 
-                  size="large" 
-                  icon={<MagnifyingGlassIcon style={iconSm} />}
-                  onClick={() => {}}
+                onPressEnter={(e) => setSearchTerm(e.target.value)}
               />
-              </Space.Compact>
-            </Col>
-            <Col xs={24} sm={12} lg={4}>
-              <Select
+              <Button
                 size="large"
-                value={filterStatus}
-                onChange={setFilterStatus}
-                style={{ width: '100%' }}
-              >
-                <Option value="all">Tất cả trạng thái</Option>
-                <Option value="active">Hoạt động</Option>
-                <Option value="locked">Bị khóa</Option>
-              </Select>
-            </Col>
-          </Row>
+                icon={<MagnifyingGlassIcon style={iconSm} />}
+                onClick={() => {}}
+              />
+            </Space.Compact>
+          </Col>
+          <Col xs={24} sm={12} lg={4}>
+            <Select
+              size="large"
+              value={filterStatus}
+              onChange={setFilterStatus}
+              style={{ width: '100%' }}
+            >
+              <Option value="all">Tất cả trạng thái</Option>
+              <Option value="active">Hoạt động</Option>
+              <Option value="locked">Bị khóa</Option>
+            </Select>
+          </Col>
+        </Row>
+      </Card>
 
-          <Table
-            columns={columns}
-            dataSource={filteredAccounts}
-            rowKey="id"
-            loading={loading}
-            pagination={{
-              pageSize: 10,
-              showSizeChanger: true,
-              showTotal: (total) => `Tổng ${total} tài khoản`,
-            }}
-          />
-        </Space>
+      {/* Accounts Table */}
+      <Card className="accounts-card">
+        <div className="table-head">
+          <div>
+            <Title level={3} style={{ marginBottom: 8 }}>Danh sách tài khoản</Title>
+            <Text type="secondary">Xem chi tiết, khóa/mở khóa, reset mật khẩu và phân quyền</Text>
+          </div>
+          <Tag color="blue">{filteredAccounts.length} tài khoản</Tag>
+        </div>
+        <Table
+          columns={columns}
+          dataSource={filteredAccounts}
+          rowKey="id"
+          loading={loading}
+          size="middle"
+          bordered
+          scroll={{ x: 'max-content' }}
+          pagination={{
+            pageSize: 10,
+            showSizeChanger: true,
+            showTotal: (total) => `Tổng ${total} tài khoản`,
+          }}
+        />
       </Card>
 
       {/* Reset Password Modal */}

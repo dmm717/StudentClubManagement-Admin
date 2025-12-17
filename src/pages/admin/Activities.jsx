@@ -257,33 +257,17 @@ const Activities = () => {
     {
       title: 'Hành động',
       key: 'actions',
-      width: 200,
+      width: 180,
       render: (_, record) => (
-        <Space size="small" wrap>
+        <Space size="middle" style={{ width: '100%', justifyContent: 'center' }}>
           <Button
-            type="link"
-            size="small"
+            type="primary"
+            size="middle"
+            style={{ minWidth: 90, borderRadius: 999 }}
             icon={<EyeIcon style={iconSm} />}
             onClick={() => handleViewDetail(record.id)}
           >
             Xem
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            icon={<PencilIcon style={iconSm} />}
-            onClick={() => handleUpdate(record)}
-          >
-            Sửa
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            danger
-            icon={<TrashIcon style={iconSm} />}
-            onClick={() => handleDelete(record)}
-          >
-            Xóa
           </Button>
         </Space>
       )
@@ -297,59 +281,82 @@ const Activities = () => {
     completed: activities.filter(a => a.status?.toLowerCase() === 'completed').length,
   };
 
+  const statCards = [
+    {
+      title: 'Tổng số hoạt động',
+      value: stats.total,
+      color: '#1890ff',
+      accent: 'rgba(24, 144, 255, 0.12)',
+      icon: CalendarIcon
+    },
+    {
+      title: 'Sắp diễn ra',
+      value: stats.upcoming,
+      color: '#faad14',
+      accent: 'rgba(250, 173, 20, 0.12)',
+      icon: CalendarIcon
+    },
+    {
+      title: 'Đang diễn ra',
+      value: stats.active,
+      color: '#52c41a',
+      accent: 'rgba(82, 196, 26, 0.12)',
+      icon: CalendarIcon
+    },
+    {
+      title: 'Đã hoàn thành',
+      value: stats.completed,
+      color: '#722ed1',
+      accent: 'rgba(114, 46, 209, 0.12)',
+      icon: CalendarIcon
+    }
+  ];
+
   return (
-    <div className="activities-page">
-      <div className="page-header" style={{ marginBottom: 24 }}>
+    <div className="activities-page animate-fade-in">
+      <div className="page-header animate-slide-up" style={{ marginBottom: 24 }}>
         <div className="header-content">
           <div>
-            <Title level={2}>Quản lý Hoạt động</Title>
-            <Text type="secondary">Xem và quản lý tất cả hoạt động của các câu lạc bộ</Text>
+            <Title level={2} style={{ margin: 0 }}>
+              <CalendarIcon
+                style={{
+                  ...iconMd,
+                  marginRight: 8,
+                  display: 'inline-block',
+                  verticalAlign: 'middle'
+                }}
+              />
+              Quản lý Hoạt động
+            </Title>
+            <Text type="secondary">
+              Xem danh sách, trạng thái và quản lý hoạt động của các câu lạc bộ
+            </Text>
           </div>
         </div>
       </div>
 
       {/* Stats */}
-      <Row gutter={16} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="Tổng hoạt động"
-              value={stats.total}
-              valueStyle={{ color: '#1890ff' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="Sắp tới"
-              value={stats.upcoming}
-              valueStyle={{ color: '#faad14' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="Đang diễn ra"
-              value={stats.active}
-              valueStyle={{ color: '#52c41a' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="Đã hoàn thành"
-              value={stats.completed}
-              valueStyle={{ color: '#722ed1' }}
-            />
-          </Card>
-        </Col>
-      </Row>
+      <div className="stat-grid animate-slide-up" style={{ marginBottom: 24 }}>
+        {statCards.map((item) => {
+          const Icon = item.icon;
+          return (
+            <Card className="stat-card card-hover" bordered={false} key={item.title}>
+              <div className="stat-icon" style={{ background: item.accent, color: item.color }}>
+                <Icon style={iconMd} />
+              </div>
+              <div className="stat-content">
+                <Text type="secondary">{item.title}</Text>
+                <div className="stat-value" style={{ color: item.color }}>
+                  {item.value}
+                </div>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
 
       {/* Filters */}
-      <Card style={{ marginBottom: 24 }}>
+      <Card className="filter-card" style={{ marginBottom: 24 }}>
         <Row gutter={16}>
           <Col xs={24} sm={12} lg={8}>
             <Space.Compact style={{ width: '100%' }}>
@@ -400,12 +407,22 @@ const Activities = () => {
       </Card>
 
       {/* Activities Table */}
-      <Card>
+      <Card className="activities-card">
+        <div className="table-head">
+          <div>
+            <Title level={3} style={{ marginBottom: 8 }}>Danh sách hoạt động</Title>
+            <Text type="secondary">Lọc, xem chi tiết, chỉnh sửa hoặc xóa hoạt động</Text>
+          </div>
+          <Tag color="blue">{filteredActivities.length} hoạt động</Tag>
+        </div>
         <Table
           columns={columns}
           dataSource={filteredActivities}
           rowKey="id"
           loading={loading}
+          size="middle"
+          bordered
+          scroll={{ x: 'max-content' }}
           pagination={{
             pageSize: 10,
             showSizeChanger: true,
