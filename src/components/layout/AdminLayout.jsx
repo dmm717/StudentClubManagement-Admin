@@ -12,12 +12,12 @@ import {
   XMarkIcon,
   ArrowRightOnRectangleIcon,
   UserIcon,
-  CalendarIcon
+  CalendarIcon,
 } from '@heroicons/react/24/outline';
-import { showConfirm } from '../utils/notifications';
-import { getIconSize } from '../utils/iconSizes';
-import { clubLeaderRequestAPI } from '../services/api';
-import { NotificationBell } from '../components/NotificationBell';
+import { showConfirm } from '../../utils/notifications';
+import { getIconSize } from '../../utils/iconSizes';
+import { clubLeaderRequestAPI } from '../../services/api';
+import { NotificationBell } from '../NotificationBell';
 import './AdminLayout.css';
 
 const { Header, Sider, Content } = Layout;
@@ -75,24 +75,26 @@ const AdminLayout = () => {
     {
       key: '/admin/dashboard',
       icon: <HomeIcon style={iconSize} />,
-      label: 'Trang chủ'
+      label: 'Trang chủ',
     },
     {
       key: '/admin/requests',
       icon: <DocumentTextIcon style={iconSize} />,
       label: (
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'space-between', 
-          width: '100%',
-          paddingRight: '8px'
-        }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            width: '100%',
+            paddingRight: '8px',
+          }}
+        >
           <span style={{ flex: 1 }}>Duyệt yêu cầu Leader</span>
           {pendingRequestsCount > 0 && (
-            <Badge 
-              count={pendingRequestsCount} 
-              style={{ 
+            <Badge
+              count={pendingRequestsCount}
+              style={{
                 backgroundColor: '#ff4d4f',
                 marginLeft: '8px',
                 boxShadow: '0 0 0 1px #fff',
@@ -100,33 +102,33 @@ const AdminLayout = () => {
                 height: '20px',
                 lineHeight: '20px',
                 minWidth: '20px',
-                borderRadius: '10px'
+                borderRadius: '10px',
               }}
             />
           )}
         </div>
-      )
+      ),
     },
     {
       key: '/admin/clubs',
       icon: <BuildingOfficeIcon style={iconSize} />,
-      label: 'Giám sát CLB'
+      label: 'Giám sát CLB',
     },
     {
       key: '/admin/activities',
       icon: <CalendarIcon style={iconSize} />,
-      label: 'Quản lý Hoạt động'
+      label: 'Quản lý Hoạt động',
     },
     {
       key: '/admin/accounts',
       icon: <UsersIcon style={iconSize} />,
-      label: 'Quản lý Tài khoản'
+      label: 'Quản lý Tài khoản',
     },
     {
       key: '/admin/reports',
       icon: <ChartBarIcon style={iconSize} />,
-      label: 'Báo cáo tổng hợp'
-    }
+      label: 'Báo cáo tổng hợp',
+    },
   ];
 
   return (
@@ -147,7 +149,7 @@ const AdminLayout = () => {
           bottom: 0,
           transform: 'translateX(0)',
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          zIndex: 1000
+          zIndex: 1000,
         }}
       >
         <div className="sidebar-header">
@@ -175,7 +177,7 @@ const AdminLayout = () => {
             )}
           </div>
         </div>
-        
+
         <Menu
           theme="dark"
           mode="inline"
@@ -199,25 +201,33 @@ const AdminLayout = () => {
         </div>
       </Sider>
 
-      <Layout 
+      <Layout
         className="main-layout"
-        style={{ 
+        style={{
           marginLeft: collapsed ? 80 : 280,
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           maxWidth: '100%',
           overflow: 'hidden',
-          width: '100%'
+          width: '100%',
         }}
       >
         <Header className="admin-header">
           <div className="header-content">
-            <Typography.Title level={4} style={{ margin: 0, color: '#fff', fontSize: '18px', fontWeight: 600 }}>
+            <Typography.Title
+              level={4}
+              style={{ margin: 0, color: '#fff', fontSize: '18px', fontWeight: 600 }}
+            >
               Hệ thống Quản lý Câu lạc bộ Sinh viên
             </Typography.Title>
             <Space align="center" size="middle">
               <NotificationBell />
-              <Avatar icon={<UserIcon style={getIconSize('sm')} />} style={{ display: 'flex', alignItems: 'center' }} />
-              <Text style={{ color: '#fff', fontSize: '14px', lineHeight: '32px' }}>Quản trị viên</Text>
+              <Avatar
+                icon={<UserIcon style={getIconSize('sm')} />}
+                style={{ display: 'flex', alignItems: 'center' }}
+              />
+              <Text style={{ color: '#fff', fontSize: '14px', lineHeight: '32px' }}>
+                Quản trị viên
+              </Text>
             </Space>
           </div>
         </Header>
@@ -230,4 +240,5 @@ const AdminLayout = () => {
 };
 
 export default AdminLayout;
+
 

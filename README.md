@@ -59,33 +59,72 @@ http://localhost:5173
 - Username: `admin`
 - Password: `admin123`
 
-## 📁 Cấu trúc dự án
+## 📁 Cấu trúc dự án (đã chuẩn hoá theo style SWP-391)
 
-```
+```text
 src/
-├── components/          # Các components tái sử dụng
-├── data/
-│   └── mockData.js     # Dữ liệu mẫu (mock data)
-├── layouts/
-│   ├── AdminLayout.jsx # Layout chính cho Admin
-│   └── AdminLayout.css
+├── api/
+│   ├── config/
+│   │   ├── constants.js      # API_BASE_URL, SIGNALR_HUB_URL
+│   │   └── client.js         # Axios client + interceptors (auth, 401/403)
+│   ├── services/             # Service cho từng module (giữ nguyên logic cũ)
+│   │   ├── auth.service.js
+│   │   ├── clubLeaderRequest.service.js
+│   │   ├── clubs.service.js
+│   │   ├── accounts.service.js
+│   │   ├── leaderClubs.service.js
+│   │   ├── activities.service.js
+│   │   └── notification.service.js
+│   ├── utils/
+│   │   └── index.js          # Placeholder cho các helper API chung
+│   └── index.js              # Gom export tất cả service
+│
+├── components/
+│   ├── layout/
+│   │   ├── AdminLayout.jsx   # Layout chính cho Admin
+│   │   ├── AdminLayout.css
+│   │   └── index.js
+│   ├── ui/
+│   │   ├── PageWrapper.jsx   # UI wrapper cho trang (tránh overflow ngang)
+│   │   └── index.js
+│   ├── NotificationBell.jsx  # Component chuông thông báo (dùng hook SignalR)
+│   ├── ProtectedRoute.jsx    # Bảo vệ route admin bằng localStorage
+│   └── index.js              # Barrel export cho components
+│
+├── context/
+│   └── AppContext.jsx        # Scaffold context global (chưa dùng nhiều)
+│
+├── hooks/
+│   └── useNotifications.js   # Hook quản lý kết nối SignalR và danh sách noti
+│
 ├── pages/
-│   └── admin/          # Các trang của Admin
-│       ├── Login.jsx   # Trang đăng nhập
-│       ├── Dashboard.jsx # Trang tổng quan
-│       ├── Clubs.jsx   # Danh sách CLB
-│       ├── ClubForm.jsx # Form thêm/sửa CLB
-│       ├── Members.jsx # Danh sách thành viên
-│       ├── MemberForm.jsx # Form thêm/sửa thành viên
-│       ├── Fees.jsx    # Quản lý phí
-│       ├── Requests.jsx # Duyệt yêu cầu
-│       ├── Reports.jsx # Báo cáo
-│       └── *.css       # CSS cho từng trang
-├── utils/              # Các utility functions
-├── App.jsx             # Component chính với routing
-├── App.css             # CSS toàn cục
-├── main.jsx            # Entry point
-└── index.css           # CSS reset
+│   └── admin/                # Các trang của Admin
+│       ├── Login.jsx
+│       ├── Dashboard.jsx
+│       ├── Clubs.jsx
+│       ├── Accounts.jsx
+│       ├── Activities.jsx
+│       ├── Requests.jsx
+│       ├── Reports.jsx
+│       ├── *.css             # CSS riêng cho từng trang
+│       └── index.js          # Barrel export (nếu sau này cần dùng)
+│
+├── routes/
+│   └── AppRoutes.jsx         # Định nghĩa toàn bộ router (giống AppRoutes.tsx bên SWP-391)
+│
+├── services/
+│   ├── api.js                # Re-export từ src/api/services (giữ import cũ không bị vỡ)
+│   └── config.js             # Re-export từ src/api/config/constants
+│
+├── store/
+│   └── index.js              # Scaffold cho store (chuẩn bị nếu cần Redux/Zustand)
+│
+├── utils/                    # Các utility functions chung (notifications, iconSizes, colors, ...)
+├── assets/                   # Hình ảnh, icon, ...
+├── App.jsx                   # Component gốc, chỉ wrap Router + AppRoutes (đơn giản như SWP-391)
+├── App.css                   # CSS toàn cục
+├── main.jsx                  # Entry point
+└── index.css                 # Global styles/reset
 ```
 
 ## 🎨 Các trang chức năng
@@ -279,5 +318,6 @@ Nếu có thắc mắc về dự án, vui lòng liên hệ qua các kênh hỗ t
 ---
 
 **Happy Coding! 🚀**
-#   S t u d e n t C l u b M a n a g e m e n t - A d m i n  
+#   S t u d e n t C l u b M a n a g e m e n t - A d m i n 
+ 
  

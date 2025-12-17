@@ -1,7 +1,7 @@
-import { Card } from 'antd';
-
 /**
- * PageWrapper component to ensure consistent styling and prevent overflow
+ * PageWrapper - component UI dùng để bọc nội dung trang,
+ * đảm bảo max-width 100% và tránh overflow ngang.
+ * (Tương tự các component UI trong components/ui của SWP-391)
  */
 const PageWrapper = ({ children, className = '', style = {} }) => {
   return (
@@ -10,7 +10,7 @@ const PageWrapper = ({ children, className = '', style = {} }) => {
       style={{
         maxWidth: '100%',
         overflowX: 'hidden',
-        ...style
+        ...style,
       }}
     >
       {children}
@@ -19,4 +19,5 @@ const PageWrapper = ({ children, className = '', style = {} }) => {
 };
 
 export default PageWrapper;
+
 
