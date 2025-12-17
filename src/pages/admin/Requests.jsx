@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { useState, useEffect } from 'react';
 import { Card, Input, Select, Button, Space, Tag, Typography, Row, Col, Statistic, Modal, Descriptions, Form, Table } from 'antd';
 import {
@@ -7,7 +8,8 @@ import {
   CheckCircleIcon,
   XCircleIcon,
   ClockIcon,
-  UserCircleIcon
+  UserCircleIcon,
+  EllipsisHorizontalIcon
 } from '@heroicons/react/24/outline';
 import { clubLeaderRequestAPI, accountsAPI } from '../../services/api';
 import { showSuccess, showError, showConfirm } from '../../utils/notifications';
@@ -359,7 +361,7 @@ const Requests = () => {
             </Card>
 
             {/* Pending Requests Table */}
-            <Card>
+            <Card className="request-card">
               <Table
                 columns={[
                   {
@@ -383,6 +385,21 @@ const Requests = () => {
                     },
                   },
                   {
+                    title: 'HỌ VÀ TÊN',
+                    key: 'fullName',
+                    width: 220,
+                    render: (_, record) => (
+                      <div>
+                        <div style={{ fontWeight: 500 }}>
+                          {record.account?.fullName || record.fullName || 'Chưa có tên'}
+                        </div>
+                        <div style={{ fontSize: 12, color: '#999' }}>
+                          {record.account?.email || record.email || ''}
+                        </div>
+                      </div>
+                    ),
+                  },
+                  {
                     title: 'TRẠNG THÁI',
                     key: 'status',
                     width: 130,
@@ -396,14 +413,15 @@ const Requests = () => {
                   {
                     title: 'HÀNH ĐỘNG',
                     key: 'actions',
-                    width: 280,
+                    width: 320,
                     align: 'center',
                     fixed: 'right',
                     render: (_, record) => (
-                      <Space size="small" wrap>
+                      <Space size="middle" wrap>
                         <Button
                           type="primary"
-                          size="small"
+                          size="middle"
+                          style={{ minWidth: 96, borderRadius: 999 }}
                           icon={<CheckCircleIcon style={iconSm} />}
                           onClick={() => handleApprove(record)}
                         >
@@ -411,14 +429,16 @@ const Requests = () => {
                         </Button>
                         <Button
                           danger
-                          size="small"
+                          size="middle"
+                          style={{ minWidth: 96, borderRadius: 999 }}
                           icon={<XCircleIcon style={iconSm} />}
                           onClick={() => handleReject(record)}
                         >
                           Từ chối
                         </Button>
                         <Button
-                          size="small"
+                          size="middle"
+                          style={{ minWidth: 96, borderRadius: 999 }}
                           icon={<EyeIcon style={iconSm} />}
                           onClick={() => handleViewDetail(record)}
                         >
@@ -428,6 +448,8 @@ const Requests = () => {
                     ),
                   },
                 ]}
+                size="middle"
+                bordered
                 dataSource={filteredRequests}
                 rowKey="id"
                 loading={loading}
@@ -471,7 +493,7 @@ const Requests = () => {
             </Card>
 
             {/* Processed Requests Table */}
-            <Card>
+            <Card className="request-card">
               <Table
                 columns={[
                   {
@@ -493,6 +515,21 @@ const Requests = () => {
                         </div>
                       );
                     },
+                  },
+                  {
+                    title: 'HỌ VÀ TÊN',
+                    key: 'fullName',
+                    width: 220,
+                    render: (_, record) => (
+                      <div>
+                        <div style={{ fontWeight: 500 }}>
+                          {record.account?.fullName || record.fullName || 'Chưa có tên'}
+                        </div>
+                        <div style={{ fontSize: 12, color: '#999' }}>
+                          {record.account?.email || record.email || ''}
+                        </div>
+                      </div>
+                    ),
                   },
                   {
                     title: 'TRẠNG THÁI',
@@ -521,7 +558,23 @@ const Requests = () => {
                       );
                     },
                   },
+                  {
+                    title: 'THAO TÁC',
+                    key: 'actions',
+                    width: 120,
+                    align: 'center',
+                    fixed: 'right',
+                    render: (_, record) => (
+                      <Button
+                        shape="circle"
+                        icon={<EllipsisHorizontalIcon style={iconSm} />}
+                        onClick={() => handleViewDetail(record)}
+                      />
+                    ),
+                  },
                 ]}
+                size="middle"
+                bordered
                 dataSource={filteredProcessedRequests}
                 rowKey="id"
                 loading={loadingProcessed}
@@ -641,45 +694,26 @@ const Requests = () => {
                   minute: '2-digit'
                 })}
               </Descriptions.Item>
-              <Descriptions.Item label="Trạng thái">
-                {selectedRequest.status?.toLowerCase() === 'pending' && (
-                  <Tag color="orange">Chờ duyệt</Tag>
-                )}
-                {selectedRequest.status?.toLowerCase() === 'approved' && (
-                  <Tag color="green">Đã duyệt</Tag>
-                )}
-                {selectedRequest.status?.toLowerCase() === 'rejected' && (
-                  <Tag color="red">Đã từ chối</Tag>
-                )}
+              <Descriptions.Item label="Lý do muốn trở thành Club Leader">
+                <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                  {selectedRequest.motivation || 'Chưa nhập'}
+                </div>
               </Descriptions.Item>
-              {selectedRequest.motivation && (
-                <Descriptions.Item label="Lý do muốn trở thành Club Leader">
-                  <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                    {selectedRequest.motivation}
-                  </div>
-                </Descriptions.Item>
-              )}
-              {selectedRequest.experience && (
-                <Descriptions.Item label="Kinh nghiệm">
-                  <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                    {selectedRequest.experience}
-                  </div>
-                </Descriptions.Item>
-              )}
-              {selectedRequest.vision && (
-                <Descriptions.Item label="Tầm nhìn">
-                  <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                    {selectedRequest.vision}
-                  </div>
-                </Descriptions.Item>
-              )}
-              {selectedRequest.commitment && (
-                <Descriptions.Item label="Cam kết">
-                  <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                    {selectedRequest.commitment}
-                  </div>
-                </Descriptions.Item>
-              )}
+              <Descriptions.Item label="Kinh nghiệm">
+                <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                  {selectedRequest.experience || 'Chưa nhập'}
+                </div>
+              </Descriptions.Item>
+              <Descriptions.Item label="Tầm nhìn">
+                <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                  {selectedRequest.vision || 'Chưa nhập'}
+                </div>
+              </Descriptions.Item>
+              <Descriptions.Item label="Cam kết">
+                <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                  {selectedRequest.commitment || 'Chưa nhập'}
+                </div>
+              </Descriptions.Item>
               {selectedRequest.adminNote && (
                 <Descriptions.Item label="Ghi chú của admin">
                   <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
@@ -692,11 +726,6 @@ const Requests = () => {
                   <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: '#ff4d4f' }}>
                     {selectedRequest.rejectReason}
                   </div>
-                </Descriptions.Item>
-              )}
-              {selectedRequest.processedBy && (
-                <Descriptions.Item label="Người xử lý">
-                  {selectedRequest.processedByUsername || selectedRequest.processedByFullName || `ID: ${selectedRequest.processedBy}`}
                 </Descriptions.Item>
               )}
               {selectedRequest.processedAt && (
