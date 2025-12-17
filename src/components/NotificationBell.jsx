@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, memo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Badge, Dropdown, Button, List, Typography, Empty } from 'antd';
 import { BellIcon } from '@heroicons/react/24/outline';
 import { useNotifications } from '../hooks/useNotifications';
@@ -23,13 +24,58 @@ const formatTime = (dateString) => {
   return date.toLocaleDateString('vi-VN');
 };
 
+// Hàm xác định loại notification và route tương ứng (cho admin)
+const getNotificationRoute = (title, message) => {
+  const titleLower = title.toLowerCase();
+  const messageLower = message.toLowerCase();
+  const combined = `${titleLower} ${messageLower}`;
+
+  // Leader request notifications - admin nhận notification về yêu cầu làm leader mới
+  if (combined.includes('yêu cầu làm leader') || combined.includes('trở thành leader') || 
+      combined.includes('leader request') || 
+      (combined.includes('yêu cầu') && combined.includes('leader')) ||
+      combined.includes('đơn trở thành leader')) {
+    return '/admin/requests';
+  }
+
+  // Activity notifications - admin sẽ đi đến trang activities
+  if (combined.includes('hoạt động') || combined.includes('activity') || 
+      combined.includes('sự kiện') || combined.includes('event') ||
+      combined.includes('hoat dong')) {
+    return '/admin/activities';
+  }
+
+  // Club status notifications - admin sẽ đi đến trang clubs
+  if ((combined.includes('khóa') || combined.includes('mở') || combined.includes('lock') || 
+       combined.includes('unlock') || combined.includes('mo') || combined.includes('khoa')) &&
+      (combined.includes('club') || combined.includes('câu lạc bộ') || combined.includes('clb') ||
+       combined.includes('cau lac bo'))) {
+    return '/admin/clubs';
+  }
+
+  return null;
+};
+
 export const NotificationBell = memo(() => {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
   const { notifications, unreadCount, markAsRead } = useNotifications();
 
   const handleMarkAsRead = useCallback((notificationId) => {
     markAsRead(notificationId);
   }, [markAsRead]);
+
+  const handleNotificationClick = useCallback((notification) => {
+    // Mark as read
+    handleMarkAsRead(notification.id);
+    
+    // Navigate to appropriate page
+    const route = getNotificationRoute(notification.title, notification.message);
+    if (route) {
+      setOpen(false);
+      navigate(route);
+    }
+  }, [handleMarkAsRead, navigate]);
 
   const menuItems = useMemo(() => {
     if (notifications.length === 0) {
@@ -71,53 +117,61 @@ export const NotificationBell = memo(() => {
       </div>
       <List
         dataSource={notifications}
-        renderItem={(item) => (
-          <List.Item
-            style={{ 
-              padding: '12px 16px',
-              cursor: 'pointer',
-              borderBottom: '1px solid #f0f0f0'
-            }}
-            onClick={() => handleMarkAsRead(item.id)}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#f5f5f5';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'white';
-            }}
-          >
-            <List.Item.Meta
-              title={
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                  <Text strong style={{ fontSize: 14 }}>{item.title}</Text>
-                  <Button
-                    type="text"
-                    size="small"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleMarkAsRead(item.id);
-                    }}
-                    style={{ padding: '0 4px' }}
-                  >
-                    ×
-                  </Button>
-                </div>
-              }
-              description={
-                <>
-                  <div style={{ marginTop: 4, fontSize: 13 }}>{item.message}</div>
-                  <Text type="secondary" style={{ fontSize: 12, marginTop: 8, display: 'block' }}>
-                    {formatTime(item.createdAt)}
-                  </Text>
-                </>
-              }
-            />
-          </List.Item>
-        )}
+        renderItem={(item) => {
+          const hasRoute = getNotificationRoute(item.title, item.message) !== null;
+          return (
+            <List.Item
+              style={{ 
+                padding: '12px 16px',
+                cursor: hasRoute ? 'pointer' : 'default',
+                borderBottom: '1px solid #f0f0f0'
+              }}
+              onClick={() => hasRoute ? handleNotificationClick(item) : handleMarkAsRead(item.id)}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#f5f5f5';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'white';
+              }}
+            >
+              <List.Item.Meta
+                title={
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                    <Text strong style={{ fontSize: 14 }}>{item.title}</Text>
+                    <Button
+                      type="text"
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleMarkAsRead(item.id);
+                      }}
+                      style={{ padding: '0 4px' }}
+                    >
+                      ×
+                    </Button>
+                  </div>
+                }
+                description={
+                  <>
+                    <div style={{ marginTop: 4, fontSize: 13 }}>{item.message}</div>
+                    <Text type="secondary" style={{ fontSize: 12, marginTop: 8, display: 'block' }}>
+                      {formatTime(item.createdAt)}
+                    </Text>
+                    {hasRoute && (
+                      <Text type="secondary" style={{ fontSize: 11, marginTop: 4, display: 'block', color: '#1890ff' }}>
+                        Nhấn để xem chi tiết →
+                      </Text>
+                    )}
+                  </>
+                }
+              />
+            </List.Item>
+          );
+        }}
       />
     </div>
     );
-  }, [notifications, unreadCount, handleMarkAsRead]);
+  }, [notifications, unreadCount, handleMarkAsRead, handleNotificationClick]);
 
   return (
     <Dropdown

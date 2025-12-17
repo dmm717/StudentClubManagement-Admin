@@ -114,10 +114,11 @@ export const clubLeaderRequestAPI = {
    * API: PUT /api/club-leader-requests/{id}/approve
    * Khi duyệt, hệ thống tự động tạo tài khoản Club Leader cho user
    * @param {number} id - ID của yêu cầu
+   * @param {string} adminNote - Ghi chú của admin (optional)
    * @returns {Promise}
    */
-  approve: (id) => {
-    return api.put(`/club-leader-requests/${id}/approve`);
+  approve: (id, adminNote) => {
+    return api.put(`/club-leader-requests/${id}/approve`, { adminNote });
   },
   /**
    * Từ chối yêu cầu trở thành Club Leader

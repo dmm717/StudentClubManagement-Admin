@@ -41,8 +41,10 @@ const Requests = () => {
   // State quản lý modal
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
+  const [showApproveModal, setShowApproveModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [rejectForm] = Form.useForm();
+  const [approveForm] = Form.useForm();
 
   // Load danh sách yêu cầu khi component mount
   useEffect(() => {
@@ -180,39 +182,69 @@ const Requests = () => {
     );
   });
 
-  const handleViewDetail = (request) => {
-    setSelectedRequest(request);
-    setShowDetailModal(true);
+  /**
+   * Hàm xử lý xem chi tiết yêu cầu
+   * Load lại thông tin account để có đầy đủ thông tin
+   * @param {object} request - Yêu cầu cần xem chi tiết
+   */
+  const handleViewDetail = async (request) => {
+    try {
+      // Load lại thông tin account để có dữ liệu mới nhất
+      const accountId = request.accountId || request.account?.id;
+      if (accountId) {
+        try {
+          const accountResponse = await accountsAPI.getById(accountId);
+          const updatedRequest = {
+            ...request,
+            account: accountResponse.data
+          };
+          setSelectedRequest(updatedRequest);
+        } catch (error) {
+          // Nếu không load được account mới, dùng account cũ
+          setSelectedRequest(request);
+        }
+      } else {
+        setSelectedRequest(request);
+      }
+      setShowDetailModal(true);
+    } catch (error) {
+      console.error('Error loading account detail:', error);
+      setSelectedRequest(request);
+      setShowDetailModal(true);
+    }
   };
 
   /**
-   * Hàm xử lý duyệt yêu cầu trở thành Club Leader
-   * API: PUT /api/club-leader-requests/{id}/approve
-   * Khi duyệt, hệ thống sẽ tự động tạo tài khoản Club Leader cho user
+   * Hàm mở modal duyệt yêu cầu
    * @param {object} request - Yêu cầu cần duyệt
    */
-  const handleApprove = async (request) => {
-    const result = await showConfirm(
-      `Bạn có chắc chắn muốn duyệt yêu cầu của "${request.account?.fullName || 'người dùng này'}"?`,
-      'Xác nhận duyệt yêu cầu'
-    );
-    
-    if (result.isConfirmed) {
-      try {
-        await clubLeaderRequestAPI.approve(request.id);
-        showSuccess('Đã duyệt yêu cầu thành công! Tài khoản club leader đã được tạo.');
-        setShowDetailModal(false);
-        // Reload tất cả dữ liệu sau khi duyệt
-        await Promise.all([
-          loadPendingRequests(),
-          loadProcessedRequests(),
-          loadStats()
-        ]);
-        // Dispatch event to notify AdminLayout to update badge count
-        window.dispatchEvent(new CustomEvent('requestProcessed'));
-      } catch (error) {
-        showError(error.response?.data?.message || 'Không thể duyệt yêu cầu!');
-      }
+  const handleApprove = (request) => {
+    setSelectedRequest(request);
+    setShowDetailModal(false);
+    setShowApproveModal(true);
+    approveForm.resetFields();
+  };
+
+  /**
+   * Hàm xử lý submit form duyệt yêu cầu
+   * API: PUT /api/club-leader-requests/{id}/approve
+   * @param {object} values - Giá trị từ form (adminNote - ghi chú duyệt)
+   */
+  const handleApproveSubmit = async (values) => {
+    try {
+      await clubLeaderRequestAPI.approve(selectedRequest.id, values.adminNote || '');
+      showSuccess('Đã duyệt yêu cầu thành công! Tài khoản club leader đã được tạo.');
+      setShowApproveModal(false);
+      // Reload tất cả dữ liệu sau khi duyệt
+      await Promise.all([
+        loadPendingRequests(),
+        loadProcessedRequests(),
+        loadStats()
+      ]);
+      // Dispatch event to notify AdminLayout to update badge count
+      window.dispatchEvent(new CustomEvent('requestProcessed'));
+    } catch (error) {
+      showError(error.response?.data?.message || 'Không thể duyệt yêu cầu!');
     }
   };
 
@@ -351,14 +383,6 @@ const Requests = () => {
                     },
                   },
                   {
-                    title: 'LÝ DO',
-                    key: 'reason',
-                    ellipsis: {
-                      showTitle: true,
-                    },
-                    render: (_, record) => record.reason || '—',
-                  },
-                  {
                     title: 'TRẠNG THÁI',
                     key: 'status',
                     width: 130,
@@ -471,14 +495,6 @@ const Requests = () => {
                     },
                   },
                   {
-                    title: 'LÝ DO',
-                    key: 'reason',
-                    ellipsis: {
-                      showTitle: true,
-                    },
-                    render: (_, record) => record.reason || '—',
-                  },
-                  {
                     title: 'TRẠNG THÁI',
                     key: 'status',
                     width: 130,
@@ -505,22 +521,6 @@ const Requests = () => {
                       );
                     },
                   },
-                  {
-                    title: 'GHI CHÚ',
-                    key: 'note',
-                    ellipsis: {
-                      showTitle: true,
-                    },
-                    render: (_, record) => {
-                      if (record.status?.toLowerCase() === 'rejected' && record.note && record.note !== 'Rejected') {
-                        return record.note;
-                      }
-                      if (record.status?.toLowerCase() === 'approved' && record.note && record.note !== 'Đã duyệt') {
-                        return record.note;
-                      }
-                      return '—';
-                    },
-                  },
                 ]}
                 dataSource={filteredProcessedRequests}
                 rowKey="id"
@@ -542,59 +542,218 @@ const Requests = () => {
 
       {/* Detail Modal */}
       <Modal
-        title={
-          <Space>
-            <DocumentTextIcon style={iconMd} />
-            Chi tiết yêu cầu trở thành Club Leader
-          </Space>
-        }
+        title={null}
         open={showDetailModal}
         onCancel={() => setShowDetailModal(false)}
         footer={
           <Space>
             <Button onClick={() => setShowDetailModal(false)}>Đóng</Button>
-            <Button danger onClick={() => handleReject(selectedRequest)}>
-              Từ chối
-            </Button>
-            <Button type="primary" onClick={() => handleApprove(selectedRequest)}>
-              Duyệt đơn
-            </Button>
+            {selectedRequest?.status?.toLowerCase() === 'pending' && (
+              <>
+                <Button danger onClick={() => handleReject(selectedRequest)}>
+                  Từ chối
+                </Button>
+                <Button type="primary" onClick={() => {
+                  setShowDetailModal(false);
+                  handleApprove(selectedRequest);
+                }}>
+                  Duyệt đơn
+                </Button>
+              </>
+            )}
           </Space>
         }
-        width={600}
+        width={800}
       >
         {selectedRequest && (
-          <Descriptions column={1} bordered>
-            <Descriptions.Item label="Họ và tên">
-              {selectedRequest.account?.fullName || 'N/A'}
-            </Descriptions.Item>
-            <Descriptions.Item label="Username">
-              {selectedRequest.account?.username || 'N/A'}
-            </Descriptions.Item>
-            <Descriptions.Item label="Email">
-              {selectedRequest.account?.email || selectedRequest.account?.Email || 'N/A'}
-            </Descriptions.Item>
-            <Descriptions.Item label="Số điện thoại">
-              {selectedRequest.account?.phone || selectedRequest.account?.Phone || 'Chưa có'}
-            </Descriptions.Item>
-            <Descriptions.Item label="Ngày yêu cầu">
-              {new Date(selectedRequest.requestDate).toLocaleDateString('vi-VN')}
-            </Descriptions.Item>
-            <Descriptions.Item label="Trạng thái">
-              <Tag color="orange">Chờ duyệt</Tag>
-            </Descriptions.Item>
-            {selectedRequest.reason && (
-              <Descriptions.Item label="Lý do muốn trở thành Club Leader">
-                {selectedRequest.reason}
+          <div>
+            {/* Thông tin tài khoản */}
+            <Title level={4} style={{ marginBottom: 16, marginTop: 0 }}>
+              <UserCircleIcon style={{ ...iconMd, marginRight: 8 }} />
+              Thông tin tài khoản
+            </Title>
+            <Descriptions column={1} bordered style={{ marginBottom: 24 }}>
+              <Descriptions.Item label="ID tài khoản">
+                {selectedRequest.accountId || selectedRequest.account?.id || 'N/A'}
               </Descriptions.Item>
-            )}
-            {selectedRequest.note && (
-              <Descriptions.Item label="Ghi chú xử lý">
-                {selectedRequest.note}
+              <Descriptions.Item label="Username">
+                {selectedRequest.account?.username || selectedRequest.username || 'N/A'}
               </Descriptions.Item>
-            )}
-          </Descriptions>
+              <Descriptions.Item label="Họ và tên">
+                {selectedRequest.account?.fullName || selectedRequest.fullName || 'N/A'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Email">
+                {selectedRequest.account?.email || selectedRequest.account?.Email || selectedRequest.email || 'N/A'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Số điện thoại">
+                {selectedRequest.account?.phone || selectedRequest.account?.Phone || selectedRequest.phone || 'Chưa có'}
+              </Descriptions.Item>
+              {(selectedRequest.account?.major || selectedRequest.account?.Major) && (
+                <Descriptions.Item label="Chuyên ngành">
+                  {selectedRequest.account?.major || selectedRequest.account?.Major || 'N/A'}
+                </Descriptions.Item>
+              )}
+              {(selectedRequest.account?.skills || selectedRequest.account?.Skills) && (
+                <Descriptions.Item label="Kỹ năng">
+                  <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                    {selectedRequest.account?.skills || selectedRequest.account?.Skills || 'N/A'}
+                  </div>
+                </Descriptions.Item>
+              )}
+              <Descriptions.Item label="Trạng thái tài khoản">
+                <Tag color={selectedRequest.account?.isActive ? 'green' : 'red'}>
+                  {selectedRequest.account?.isActive ? 'Đang hoạt động' : 'Đã khóa'}
+                </Tag>
+              </Descriptions.Item>
+              {selectedRequest.account?.createdAt && (
+                <Descriptions.Item label="Ngày tạo tài khoản">
+                  {new Date(selectedRequest.account.createdAt).toLocaleDateString('vi-VN')}
+                </Descriptions.Item>
+              )}
+              {selectedRequest.account?.roles && selectedRequest.account.roles.length > 0 && (
+                <Descriptions.Item label="Vai trò">
+                  <Space wrap>
+                    {selectedRequest.account.roles.map((role, index) => (
+                      <Tag key={index} color="blue">
+                        {role}
+                      </Tag>
+                    ))}
+                  </Space>
+                </Descriptions.Item>
+              )}
+            </Descriptions>
+
+            {/* Thông tin đơn yêu cầu */}
+            <Title level={4} style={{ marginBottom: 16 }}>
+              <DocumentTextIcon style={{ ...iconMd, marginRight: 8 }} />
+              Thông tin đơn yêu cầu
+            </Title>
+            <Descriptions column={1} bordered>
+              <Descriptions.Item label="ID đơn">
+                {selectedRequest.id || 'N/A'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Ngày gửi yêu cầu">
+                {new Date(selectedRequest.requestDate).toLocaleDateString('vi-VN', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </Descriptions.Item>
+              <Descriptions.Item label="Trạng thái">
+                {selectedRequest.status?.toLowerCase() === 'pending' && (
+                  <Tag color="orange">Chờ duyệt</Tag>
+                )}
+                {selectedRequest.status?.toLowerCase() === 'approved' && (
+                  <Tag color="green">Đã duyệt</Tag>
+                )}
+                {selectedRequest.status?.toLowerCase() === 'rejected' && (
+                  <Tag color="red">Đã từ chối</Tag>
+                )}
+              </Descriptions.Item>
+              {selectedRequest.motivation && (
+                <Descriptions.Item label="Lý do muốn trở thành Club Leader">
+                  <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                    {selectedRequest.motivation}
+                  </div>
+                </Descriptions.Item>
+              )}
+              {selectedRequest.experience && (
+                <Descriptions.Item label="Kinh nghiệm">
+                  <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                    {selectedRequest.experience}
+                  </div>
+                </Descriptions.Item>
+              )}
+              {selectedRequest.vision && (
+                <Descriptions.Item label="Tầm nhìn">
+                  <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                    {selectedRequest.vision}
+                  </div>
+                </Descriptions.Item>
+              )}
+              {selectedRequest.commitment && (
+                <Descriptions.Item label="Cam kết">
+                  <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                    {selectedRequest.commitment}
+                  </div>
+                </Descriptions.Item>
+              )}
+              {selectedRequest.adminNote && (
+                <Descriptions.Item label="Ghi chú của admin">
+                  <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                    {selectedRequest.adminNote}
+                  </div>
+                </Descriptions.Item>
+              )}
+              {selectedRequest.rejectReason && (
+                <Descriptions.Item label="Lý do từ chối">
+                  <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: '#ff4d4f' }}>
+                    {selectedRequest.rejectReason}
+                  </div>
+                </Descriptions.Item>
+              )}
+              {selectedRequest.processedBy && (
+                <Descriptions.Item label="Người xử lý">
+                  {selectedRequest.processedByUsername || selectedRequest.processedByFullName || `ID: ${selectedRequest.processedBy}`}
+                </Descriptions.Item>
+              )}
+              {selectedRequest.processedAt && (
+                <Descriptions.Item label="Thời gian xử lý">
+                  {new Date(selectedRequest.processedAt).toLocaleDateString('vi-VN', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </Descriptions.Item>
+              )}
+            </Descriptions>
+          </div>
         )}
+      </Modal>
+
+      {/* Approve Modal */}
+      <Modal
+        title="Duyệt yêu cầu"
+        open={showApproveModal}
+        onCancel={() => {
+          setShowApproveModal(false);
+          approveForm.resetFields();
+        }}
+        footer={null}
+      >
+        <Form
+          form={approveForm}
+          layout="vertical"
+          onFinish={handleApproveSubmit}
+        >
+          <Form.Item
+            name="adminNote"
+            label="Ghi chú"
+            rules={[{ required: false }]}
+          >
+            <Input.TextArea
+              rows={4}
+              placeholder="Nhập ghi chú (không bắt buộc)"
+            />
+          </Form.Item>
+          <Form.Item>
+            <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+              <Button onClick={() => {
+                setShowApproveModal(false);
+                approveForm.resetFields();
+              }}>
+                Hủy
+              </Button>
+              <Button type="primary" htmlType="submit">
+                Xác nhận duyệt
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
       </Modal>
 
       {/* Reject Modal */}

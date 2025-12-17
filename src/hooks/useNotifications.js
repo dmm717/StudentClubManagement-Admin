@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { notificationAPI } from '../services/api';
 import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
 import { SIGNALR_HUB_URL } from '../services/config';
 
@@ -8,32 +7,6 @@ export const useNotifications = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [connection, setConnection] = useState(null);
 
-  // Fetch notifications from API
-  const fetchNotifications = useCallback(async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
-      const data = await notificationAPI.getUnread();
-      setNotifications(data);
-    } catch (error) {
-      console.error('Failed to fetch notifications:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  // Mark notification as read
-  const markAsRead = useCallback(async (notificationId) => {
-    try {
-      await notificationAPI.markAsRead(notificationId);
-      setNotifications(prev => prev.filter(n => n.id !== notificationId));
-    } catch (error) {
-      console.error('Failed to mark notification as read:', error);
-    }
-  }, []);
-
-  // Get accountId from token
   const getAccountIdFromToken = () => {
     try {
       const token = localStorage.getItem('token');
@@ -46,7 +19,10 @@ export const useNotifications = () => {
     }
   };
 
-  // Setup SignalR connection
+  const markAsRead = useCallback((notificationId) => {
+    setNotifications(prev => prev.filter(n => n.id !== notificationId));
+  }, []);
+
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) return;
@@ -62,45 +38,90 @@ export const useNotifications = () => {
     setConnection(newConnection);
   }, []);
 
-  // Start connection and setup event handlers
   useEffect(() => {
     if (!connection) return;
 
     const startConnection = async () => {
       try {
         await connection.start();
-        console.log('SignalR Connected');
 
-        // Join user's notification group
         const accountId = getAccountIdFromToken();
         if (accountId) {
           await connection.invoke('Join', accountId);
         }
 
-        // Fetch initial notifications
-        fetchNotifications();
+        setIsLoading(false);
       } catch (error) {
-        console.error('SignalR Connection Error:', error);
+        setIsLoading(false);
       }
     };
 
-    // Listen for new notifications
+    const processNotification = (notification) => {
+      if (!notification || typeof notification !== 'object') return;
+
+      if (Array.isArray(notification)) {
+        notification.forEach(notif => processNotification(notif));
+        return;
+      }
+
+      if (typeof notification !== 'object') return;
+      
+      const normalized = {
+        id: notification.id || notification.Id || `notif-${Date.now()}-${Math.random()}`,
+        accountId: notification.accountId || notification.accountID || notification.AccountId || notification.AccountID || 0,
+        title: notification.title || notification.Title || 'Thông báo',
+        message: notification.message || notification.Message || notification.content || notification.Content || '',
+        createdAt: notification.createdAt || notification.CreatedAt || notification.created_at || notification.Created_At || new Date().toISOString(),
+        isRead: false
+      };
+      
+      setNotifications(prev => {
+        const exists = prev.some(n => n.id === normalized.id);
+        if (exists) {
+          return prev;
+        }
+        return [normalized, ...prev];
+      });
+    };
+
     connection.on('ReceiveNotification', (notification) => {
-      setNotifications(prev => [notification, ...prev]);
+      processNotification(notification);
+    });
+
+    connection.on('Notification', (data) => {
+      processNotification(data);
+    });
+
+    connection.on('NewNotification', (data) => {
+      processNotification(data);
+    });
+
+    connection.on('ActivityCreated', (data) => {
+      processNotification(data);
+    });
+
+    connection.on('ActivityNotification', (data) => {
+      processNotification(data);
     });
 
     startConnection();
 
     return () => {
-      connection.stop();
+      if (connection) {
+        connection.off('ReceiveNotification');
+        connection.off('Notification');
+        connection.off('NewNotification');
+        connection.off('ActivityCreated');
+        connection.off('ActivityNotification');
+        connection.stop().catch(() => {});
+      }
     };
-  }, [connection, fetchNotifications]);
+  }, [connection]);
 
   return {
     notifications,
     isLoading,
     unreadCount: notifications.length,
-    markAsRead,
-    refreshNotifications: fetchNotifications
+    markAsRead
   };
 };
