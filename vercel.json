@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/api/:path*",
+      "destination": "https://studentclubmanagementsystem-f9cbhdhccwgafmd0.southeastasia-01.azurewebsites.net/api/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/"
     }
