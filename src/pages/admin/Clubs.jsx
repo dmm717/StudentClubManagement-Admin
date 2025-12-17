@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Card, Table, Input, Select, Button, Space, Tag, Typography, Row, Col, Statistic, Modal, Descriptions } from 'antd';
-const { Search } = Input;
 import {
   BuildingOfficeIcon,
   MagnifyingGlassIcon,
   EyeIcon,
   LockClosedIcon,
-  LockOpenIcon
+  LockOpenIcon,
+  UserGroupIcon,
+  CurrencyDollarIcon
 } from '@heroicons/react/24/outline';
 import { clubsAPI } from '../../services/api';
 import { showConfirm, showSuccess, showError } from '../../utils/notifications';
@@ -210,10 +211,11 @@ const Clubs = () => {
     {
       title: 'Tên CLB',
       key: 'name',
+      align: 'left',
+      className: 'col-name',
       render: (_, record) => (
         <div>
           <div style={{ fontWeight: 500 }}>{record.name}</div>
-          <Text type="secondary" style={{ fontSize: 12 }}>{record.description}</Text>
         </div>
       )
     },
@@ -228,7 +230,7 @@ const Clubs = () => {
     {
       title: 'Doanh thu',
       key: 'revenue',
-      align: 'right',
+      align: 'center',
       width: 150,
       render: (_, record) => {
         // Lấy totalRevenue từ backend (hỗ trợ cả camelCase và PascalCase)
@@ -241,12 +243,14 @@ const Clubs = () => {
       dataIndex: 'establishedDate',
       key: 'establishedDate',
       width: 120,
+      align: 'center',
       render: (date) => date ? new Date(date).toLocaleDateString('vi-VN') : 'N/A'
     },
     {
       title: 'Trạng thái',
       key: 'status',
       width: 120,
+      align: 'center',
       render: (_, record) => {
         const statusLower = (record.status || '').toLowerCase();
         const isActive = statusLower === 'active';
@@ -261,6 +265,7 @@ const Clubs = () => {
       title: 'Hành động',
       key: 'actions',
       width: 200,
+      align: 'center',
       render: (_, record) => (
         <Space size="small" wrap>
           <Button
@@ -293,86 +298,95 @@ const Clubs = () => {
     totalRevenue: totalRevenue,
   };
 
+  const statCards = [
+    {
+      title: 'Tổng số CLB',
+      value: stats.total,
+      color: '#1890ff',
+      accent: 'rgba(24, 144, 255, 0.12)',
+      icon: BuildingOfficeIcon
+    },
+    {
+      title: 'Đang hoạt động',
+      value: stats.active,
+      color: '#52c41a',
+      accent: 'rgba(82, 196, 26, 0.12)',
+      icon: LockOpenIcon
+    },
+    {
+      title: 'Bị khóa',
+      value: stats.locked,
+      color: '#ff4d4f',
+      accent: 'rgba(255, 77, 79, 0.12)',
+      icon: LockClosedIcon
+    },
+    {
+      title: 'Tổng thành viên',
+      value: stats.totalMembers,
+      color: '#722ed1',
+      accent: 'rgba(114, 46, 209, 0.12)',
+      icon: UserGroupIcon
+    },
+    {
+      title: 'Tổng doanh thu phí',
+      value: stats.totalRevenue,
+      display: formatCurrency(stats.totalRevenue),
+      color: '#52c41a',
+      accent: 'rgba(82, 196, 26, 0.12)',
+      icon: CurrencyDollarIcon
+    }
+  ];
+
   return (
-    <div className="clubs-page">
-      <div className="page-header" style={{ marginBottom: 24 }}>
-        <div className="header-content">
-          <div>
-            <Title level={2}>Giám sát Câu lạc bộ</Title>
-            <Text type="secondary">Xem danh sách CLB, trạng thái, số thành viên và quản lý</Text>
-          </div>
+    <div className="clubs-page animate-fade-in" style={{ maxWidth: '100%', overflowX: 'hidden' }}>
+      <div className="page-header animate-slide-up" style={{ marginBottom: 24 }}>
+        <div>
+          <Title level={2} style={{ margin: 0 }}>
+            <BuildingOfficeIcon style={{ ...iconMd, marginRight: 8, display: 'inline-block', verticalAlign: 'middle' }} />
+            Giám sát Câu lạc bộ
+          </Title>
+          <Text type="secondary">Xem danh sách CLB, trạng thái, số thành viên và quản lý</Text>
         </div>
       </div>
 
       {/* Stats */}
-      <Row gutter={16} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="Tổng số CLB"
-              value={stats.total}
-              valueStyle={{ color: '#1890ff' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="Đang hoạt động"
-              value={stats.active}
-              valueStyle={{ color: '#52c41a' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="Bị khóa"
-              value={stats.locked}
-              valueStyle={{ color: '#ff4d4f' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="Tổng thành viên"
-              value={stats.totalMembers}
-              valueStyle={{ color: '#722ed1' }}
-            />
-          </Card>
-        </Col>
-      </Row>
-      <Row gutter={16} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={12} lg={12}>
-          <Card>
-            <Statistic
-              title="Tổng doanh thu phí"
-              value={formatCurrency(stats.totalRevenue)}
-              valueStyle={{ color: '#52c41a', fontSize: '24px' }}
-            />
-          </Card>
-        </Col>
-      </Row>
+      <div className="stat-grid animate-slide-up" style={{ marginBottom: 24 }}>
+        {statCards.map((item) => {
+          const Icon = item.icon;
+          return (
+            <Card className="stat-card card-hover" bordered={false} key={item.title}>
+              <div className="stat-icon" style={{ background: item.accent, color: item.color }}>
+                <Icon style={iconMd} />
+              </div>
+              <div className="stat-content">
+                <Text type="secondary">{item.title}</Text>
+                <div className="stat-value" style={{ color: item.color }}>
+                  {item.display ?? item.value}
+                </div>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
 
       {/* Filters */}
-      <Card style={{ marginBottom: 24 }}>
+      <Card className="filter-card" style={{ marginBottom: 24 }}>
         <Row gutter={16}>
           <Col xs={24} sm={16}>
             <Space.Compact style={{ width: '100%' }}>
               <Input
-              placeholder="Tìm kiếm theo tên CLB..."
-              allowClear
-              size="large"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Tìm kiếm theo tên CLB..."
+                allowClear
+                size="large"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 onPressEnter={(e) => setSearchTerm(e.target.value)}
               />
               <Button 
                 size="large" 
                 icon={<MagnifyingGlassIcon style={iconSm} />}
                 onClick={() => {}}
-            />
+              />
             </Space.Compact>
           </Col>
           <Col xs={24} sm={8}>
@@ -391,12 +405,22 @@ const Clubs = () => {
       </Card>
 
       {/* Clubs Table */}
-      <Card>
+      <Card className="clubs-card request-card">
+        <div className="table-head">
+          <div>
+            <Title level={3} style={{ marginBottom: 8 }}>Danh sách câu lạc bộ</Title>
+            <Text type="secondary">Lọc, xem chi tiết và khóa/mở khóa trực tiếp</Text>
+          </div>
+          <Tag color="blue">{filteredClubs.length} CLB</Tag>
+        </div>
         <Table
           columns={columns}
           dataSource={filteredClubs}
           rowKey="id"
           loading={loading}
+          size="middle"
+          bordered
+          scroll={{ x: 'max-content' }}
           pagination={{
             pageSize: 10,
             showSizeChanger: true,

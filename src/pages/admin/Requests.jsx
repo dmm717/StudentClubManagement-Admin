@@ -694,26 +694,26 @@ const Requests = () => {
                   minute: '2-digit'
                 })}
               </Descriptions.Item>
-              <Descriptions.Item label="Lý do muốn trở thành Club Leader">
-                <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                <Descriptions.Item label="Lý do muốn trở thành Club Leader">
+                  <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                   {selectedRequest.motivation || 'Chưa nhập'}
-                </div>
-              </Descriptions.Item>
-              <Descriptions.Item label="Kinh nghiệm">
-                <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                  </div>
+                </Descriptions.Item>
+                <Descriptions.Item label="Kinh nghiệm">
+                  <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                   {selectedRequest.experience || 'Chưa nhập'}
-                </div>
-              </Descriptions.Item>
-              <Descriptions.Item label="Tầm nhìn">
-                <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                  </div>
+                </Descriptions.Item>
+                <Descriptions.Item label="Tầm nhìn">
+                  <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                   {selectedRequest.vision || 'Chưa nhập'}
-                </div>
-              </Descriptions.Item>
-              <Descriptions.Item label="Cam kết">
-                <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                  </div>
+                </Descriptions.Item>
+                <Descriptions.Item label="Cam kết">
+                  <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                   {selectedRequest.commitment || 'Chưa nhập'}
-                </div>
-              </Descriptions.Item>
+                  </div>
+                </Descriptions.Item>
               {selectedRequest.adminNote && (
                 <Descriptions.Item label="Ghi chú của admin">
                   <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
