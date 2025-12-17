@@ -1,5 +1,5 @@
 // Host API của BE (không kèm /api) - dùng cho cả HTTP API và SignalR
-const API_HOST = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7124';
+const API_HOST = import.meta.env.VITE_API_BASE_URL || 'https://studentclubmanagementsystem-f9cbhdhccwgafmd0.southeastasia-01.azurewebsites.net';
 
 // API base URL configuration (đúng với route "api/[controller]" của BE)
 export const API_BASE_URL = `${API_HOST}/api`;
