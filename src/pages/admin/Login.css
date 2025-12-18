@@ -20,7 +20,6 @@
   z-index: 0;
 }
 
-/* Overlay để làm tối hình ảnh một chút nếu cần - loại bỏ hoàn toàn */
 .login-background::before {
   content: '';
   position: absolute;
@@ -156,8 +155,6 @@
   margin-bottom: 20px;
 }
 
-/* Glassmorphism cho Input - Đảm bảo đồng nhất - Không có border */
-/* Tất cả input đều dùng wrapper, không set background riêng */
 .login-form .ant-input {
   background: transparent !important;
   border: none !important;
@@ -169,7 +166,6 @@
   height: 100% !important;
 }
 
-/* Input wrapper cho Input.Password */
 .login-form .ant-input-password {
   padding: 0 !important;
   background: transparent !important;
@@ -189,7 +185,6 @@
   color: rgba(255, 255, 255, 0.6) !important;
 }
 
-/* Hover state - chỉ wrapper thay đổi, input bên trong transparent */
 .login-form .ant-input:hover,
 .login-form .ant-input-password:hover,
 .login-form .ant-input-password .ant-input:hover {
@@ -198,7 +193,6 @@
   box-shadow: none !important;
 }
 
-/* Focus state - chỉ wrapper thay đổi, input bên trong transparent */
 .login-form .ant-input:focus,
 .login-form .ant-input-password:focus,
 .login-form .ant-input-focused,
@@ -210,7 +204,6 @@
   outline: none !important;
 }
 
-/* Prefix và Suffix icon - không có background riêng, trong suốt */
 .login-form .ant-input-prefix,
 .login-form .ant-input-suffix {
   background: transparent !important;
@@ -231,7 +224,6 @@
   padding: 0 12px !important;
 }
 
-/* Password icon - đồng nhất */
 .login-form .ant-input-password-icon {
   color: rgba(255, 255, 255, 0.7) !important;
   transition: color 0.3s ease;
@@ -241,8 +233,6 @@
   color: rgba(255, 255, 255, 0.9) !important;
 }
 
-/* Đảm bảo cả hai input có cùng padding với prefix */
-/* Input Affix Wrapper - Glassmorphism style */
 .login-form .ant-input-affix-wrapper {
   background: rgba(255, 255, 255, 0.25) !important;
   backdrop-filter: blur(5px);
@@ -262,7 +252,6 @@
   overflow: hidden;
 }
 
-/* Input bên trong wrapper - hoàn toàn transparent với padding đúng */
 .login-form .ant-input-affix-wrapper .ant-input {
   background: transparent !important;
   border: none !important;
@@ -281,7 +270,6 @@
   color: rgba(255, 255, 255, 0.6) !important;
 }
 
-/* Prefix và Suffix trong wrapper - transparent */
 .login-form .ant-input-affix-wrapper .ant-input-prefix,
 .login-form .ant-input-affix-wrapper .ant-input-suffix {
   background: transparent !important;
@@ -292,7 +280,6 @@
   z-index: 1 !important;
 }
 
-/* Hover state */
 .login-form .ant-input-affix-wrapper:hover {
   background: rgba(255, 255, 255, 0.3) !important;
   border-color: rgba(255, 255, 255, 0.4) !important;
@@ -302,7 +289,6 @@
     inset 0 -1px 0 rgba(255, 255, 255, 0.15) !important;
 }
 
-/* Focus state */
 .login-form .ant-input-affix-wrapper-focused,
 .login-form .ant-input-affix-wrapper:focus,
 .login-form .ant-input-affix-wrapper:focus-within {
@@ -315,7 +301,6 @@
   outline: none !important;
 }
 
-/* Đảm bảo Input không có border riêng khi trong wrapper */
 .login-form .ant-input-affix-wrapper .ant-input:focus,
 .login-form .ant-input-affix-wrapper .ant-input-focused {
   box-shadow: none !important;
@@ -324,7 +309,6 @@
   background: transparent !important;
 }
 
-/* Input.Password wrapper - Glassmorphism style */
 .login-form .ant-input-password {
   background: rgba(255, 255, 255, 0.25) !important;
   backdrop-filter: blur(5px);
@@ -364,7 +348,6 @@
     inset 0 -1px 0 rgba(255, 255, 255, 0.2) !important;
 }
 
-/* Glassmorphism cho Button */
 .login-btn {
   height: 48px;
   font-size: 16px;
@@ -421,13 +404,11 @@
   font-weight: 600;
 }
 
-/* Error message styling */
 .login-form .ant-form-item-explain-error {
   color: rgba(255, 200, 200, 0.95) !important;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-/* Responsive */
 @media (max-width: 768px) {
   .login-box {
     padding: 30px 20px;
@@ -450,7 +431,6 @@
   }
 }
 
-/* Fallback nếu hình ảnh không tải được */
 @supports not (backdrop-filter: blur(20px)) {
   .login-box {
     background: rgba(255, 255, 255, 0.95);

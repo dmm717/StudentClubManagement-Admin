@@ -29,13 +29,10 @@ function AppRoutes() {
       }
     >
       <Routes>
-        {/* Redirect root to admin login */}
         <Route path="/" element={<Navigate to="/admin/login" />} />
 
-        {/* Admin Login */}
         <Route path="/admin/login" element={<Login />} />
 
-        {/* Protected Admin Routes */}
         <Route
           path="/admin"
           element={

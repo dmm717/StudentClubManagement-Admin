@@ -2,7 +2,6 @@ import axios from 'axios';
 import { showError } from '../../utils/notifications';
 import { API_BASE_URL } from './constants';
 
-// Tạo axios instance với cấu hình mặc định
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -10,7 +9,6 @@ const api = axios.create({
   },
 });
 
-// Request Interceptor - Tự động thêm JWT token vào header
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -24,7 +22,6 @@ api.interceptors.request.use(
   }
 );
 
-// Response Interceptor - Xử lý errors tự động
 api.interceptors.response.use(
   (response) => response,
   (error) => {

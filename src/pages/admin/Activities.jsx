@@ -1,83 +1,54 @@
 import { useState, useEffect } from 'react';
-import { Card, Table, Input, Select, Button, Space, Tag, Typography, Row, Col, Statistic, Modal, Descriptions, Form, DatePicker } from 'antd';
+import { Card, Table, Input, Select, Button, Space, Tag, Typography, Row, Col, Modal, Descriptions } from 'antd';
 import {
   CalendarIcon,
   MagnifyingGlassIcon,
   EyeIcon,
-  PencilIcon,
-  TrashIcon,
   BuildingOfficeIcon
 } from '@heroicons/react/24/outline';
 import { activitiesAPI, clubsAPI } from '../../services/api';
-import { showConfirm, showSuccess, showError } from '../../utils/notifications';
+import { showSuccess, showError } from '../../utils/notifications';
 import { getIconSize } from '../../utils/iconSizes';
-import dayjs from 'dayjs';
 import './Activities.css';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
-const { TextArea } = Input;
 
-/**
- * Component Activities - Quản lý hoạt động của các câu lạc bộ
- * Chức năng: Xem danh sách, xem chi tiết, cập nhật, xóa activities
- */
 const Activities = () => {
-  // State quản lý danh sách activities và clubs
   const [activities, setActivities] = useState([]);
   const [clubs, setClubs] = useState([]);
   const [loading, setLoading] = useState(false);
   
-  // State cho filter và search
   const [searchTerm, setSearchTerm] = useState('');
   const [filterClub, setFilterClub] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   
-  // State quản lý modal
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState(null);
-  const [updateForm] = Form.useForm();
 
-  // Load danh sách clubs khi component mount
   useEffect(() => {
     loadClubs();
   }, []);
 
-  // Load activities khi filterClub thay đổi
   useEffect(() => {
-    // Khi filterClub thay đổi, reload activities với API tương ứng
     loadActivities();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterClub]);
 
-  /**
-   * Hàm load danh sách clubs để hiển thị trong dropdown filter
-   * API: GET /api/clubs
-   */
   const loadClubs = async () => {
     try {
       const response = await clubsAPI.getAll();
       setClubs(response.data || []);
     } catch (error) {
-      // Silent fail for clubs loading
     }
   };
 
-  /**
-   * Hàm load danh sách activities
-   * API 1: GET /api/activities - Lấy tất cả activities (khi filterClub === 'all')
-   * API 3: GET /api/activities/club/{clubId} - Lấy activities theo club (khi chọn club cụ thể)
-   */
   const loadActivities = async () => {
     setLoading(true);
     try {
       let response;
       if (filterClub === 'all') {
-        // Sử dụng API 1: Lấy tất cả activities
         response = await activitiesAPI.getAll();
       } else {
-        // Sử dụng API 3: Lấy activities theo club
         response = await activitiesAPI.getByClub(parseInt(filterClub));
       }
       setActivities(response.data || []);
@@ -89,22 +60,20 @@ const Activities = () => {
   };
 
   const filteredActivities = activities.filter(activity => {
-    // Filter theo search term (client-side vì API không hỗ trợ search)
     const matchesSearch = 
       activity.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       activity.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       activity.location?.toLowerCase().includes(searchTerm.toLowerCase());
-    // Filter theo status (client-side)
-    const matchesStatus = filterStatus === 'all' || activity.status === filterStatus;
-    // Club filter đã được xử lý ở API level (API 1 hoặc API 3)
+    const statusLower = activity.status?.toLowerCase();
+    const matchesStatus = filterStatus === 'all' || 
+      (filterStatus === 'sapToi' && (statusLower === 'saptoi' || statusLower === 'upcoming')) ||
+      (filterStatus === 'dangDienRa' && (statusLower === 'dangdienra' || statusLower === 'active')) ||
+      (filterStatus === 'daHoanThanh' && (statusLower === 'dahoanthanh' || statusLower === 'completed')) ||
+      (filterStatus === 'daHuy' && (statusLower === 'dahuy' || statusLower === 'cancelled')) ||
+      activity.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
 
-  /**
-   * Hàm xem chi tiết activity
-   * API 4: GET /api/activities/{id}
-   * @param {number} activityId - ID của activity cần xem chi tiết
-   */
   const handleViewDetail = async (activityId) => {
     try {
       const response = await activitiesAPI.getById(activityId);
@@ -115,63 +84,7 @@ const Activities = () => {
     }
   };
 
-  const handleUpdate = (activity) => {
-    setSelectedActivity(activity);
-    updateForm.setFieldsValue({
-      title: activity.title,
-      description: activity.description,
-      location: activity.location,
-      status: activity.status,
-      startTime: activity.startTime ? dayjs(activity.startTime) : null,
-      endTime: activity.endTime ? dayjs(activity.endTime) : null,
-    });
-    setShowUpdateModal(true);
-  };
 
-  /**
-   * Hàm xử lý submit form cập nhật activity
-   * API: PUT /api/activities/{id}
-   * @param {object} values - Giá trị từ form (title, description, location, status, startTime, endTime)
-   */
-  const handleUpdateSubmit = async (values) => {
-    try {
-      // Convert dayjs date objects to ISO string
-      const updateData = {
-        ...values,
-        startTime: values.startTime ? values.startTime.toISOString() : null,
-        endTime: values.endTime ? values.endTime.toISOString() : null,
-      };
-      await activitiesAPI.update(selectedActivity.id, updateData);
-      showSuccess('Đã cập nhật hoạt động thành công!');
-      setShowUpdateModal(false);
-      updateForm.resetFields();
-      loadActivities();  // Reload danh sách sau khi cập nhật
-    } catch (error) {
-      showError(error.response?.data?.message || 'Không thể cập nhật hoạt động!');
-    }
-  };
-
-  /**
-   * Hàm xử lý xóa activity
-   * API: DELETE /api/activities/{id}
-   * @param {object} activity - Activity cần xóa
-   */
-  const handleDelete = async (activity) => {
-    const result = await showConfirm(
-      `Bạn có chắc chắn muốn xóa hoạt động "${activity.title}"? Hành động này không thể hoàn tác!`,
-      'Xác nhận xóa hoạt động'
-    );
-    
-    if (result.isConfirmed) {
-      try {
-        await activitiesAPI.delete(activity.id);
-        showSuccess('Đã xóa hoạt động thành công!');
-        loadActivities();  // Reload danh sách sau khi xóa
-      } catch (error) {
-        showError(error.response?.data?.message || 'Không thể xóa hoạt động!');
-      }
-    }
-  };
 
   const getClubName = (clubId) => {
     const club = clubs.find(c => c.id === clubId);
@@ -179,37 +92,38 @@ const Activities = () => {
   };
 
   const getStatusColor = (status) => {
-    switch (status?.toLowerCase()) {
-      case 'active':
-      case 'upcoming':
-        return 'green';
-      case 'completed':
-        return 'blue';
-      case 'cancelled':
-        return 'red';
-      default:
-        return 'default';
+    const statusLower = status?.toLowerCase();
+    if (statusLower === 'dangdienra' || statusLower === 'active' || statusLower === 'saptoi' || statusLower === 'upcoming') {
+      return 'green';
     }
+    if (statusLower === 'dahoanthanh' || statusLower === 'completed') {
+      return 'blue';
+    }
+    if (statusLower === 'dahuy' || statusLower === 'cancelled') {
+      return 'red';
+    }
+    return 'default';
   };
 
   const getStatusLabel = (status) => {
-    switch (status?.toLowerCase()) {
-      case 'active':
-        return 'Đang diễn ra';
-      case 'upcoming':
-        return 'Sắp tới';
-      case 'completed':
-        return 'Đã hoàn thành';
-      case 'cancelled':
-        return 'Đã hủy';
-      default:
-        return status || 'N/A';
+    const statusLower = status?.toLowerCase();
+    if (statusLower === 'dangdienra' || statusLower === 'active') {
+      return 'Đang diễn ra';
     }
+    if (statusLower === 'saptoi' || statusLower === 'upcoming') {
+      return 'Sắp tới';
+    }
+    if (statusLower === 'dahoanthanh' || statusLower === 'completed') {
+      return 'Đã hoàn thành';
+    }
+    if (statusLower === 'dahuy' || statusLower === 'cancelled') {
+      return 'Đã hủy';
+    }
+    return status || 'N/A';
   };
 
   const iconSm = getIconSize('sm');
   const iconMd = getIconSize('md');
-  const iconXl = getIconSize('xl');
 
   const columns = [
     {
@@ -276,9 +190,18 @@ const Activities = () => {
 
   const stats = {
     total: activities.length,
-    upcoming: activities.filter(a => a.status?.toLowerCase() === 'upcoming').length,
-    active: activities.filter(a => a.status?.toLowerCase() === 'active').length,
-    completed: activities.filter(a => a.status?.toLowerCase() === 'completed').length,
+    upcoming: activities.filter(a => {
+      const status = a.status?.toLowerCase();
+      return status === 'saptoi' || status === 'upcoming';
+    }).length,
+    active: activities.filter(a => {
+      const status = a.status?.toLowerCase();
+      return status === 'dangdienra' || status === 'active';
+    }).length,
+    completed: activities.filter(a => {
+      const status = a.status?.toLowerCase();
+      return status === 'dahoanthanh' || status === 'completed';
+    }).length,
   };
 
   const statCards = [
@@ -335,7 +258,6 @@ const Activities = () => {
         </div>
       </div>
 
-      {/* Stats */}
       <div className="stat-grid animate-slide-up" style={{ marginBottom: 24 }}>
         {statCards.map((item) => {
           const Icon = item.icon;
@@ -355,7 +277,6 @@ const Activities = () => {
         })}
       </div>
 
-      {/* Filters */}
       <Card className="filter-card" style={{ marginBottom: 24 }}>
         <Row gutter={16}>
           <Col xs={24} sm={12} lg={8}>
@@ -397,21 +318,20 @@ const Activities = () => {
               onChange={setFilterStatus}
             >
               <Option value="all">Tất cả trạng thái</Option>
-              <Option value="upcoming">Sắp tới</Option>
-              <Option value="active">Đang diễn ra</Option>
-              <Option value="completed">Đã hoàn thành</Option>
-              <Option value="cancelled">Đã hủy</Option>
+              <Option value="sapToi">Sắp tới</Option>
+              <Option value="dangDienRa">Đang diễn ra</Option>
+              <Option value="daHoanThanh">Đã hoàn thành</Option>
+              <Option value="daHuy">Đã hủy</Option>
             </Select>
           </Col>
         </Row>
       </Card>
 
-      {/* Activities Table */}
       <Card className="activities-card">
         <div className="table-head">
           <div>
             <Title level={3} style={{ marginBottom: 8 }}>Danh sách hoạt động</Title>
-            <Text type="secondary">Lọc, xem chi tiết, chỉnh sửa hoặc xóa hoạt động</Text>
+            <Text type="secondary">Lọc và xem chi tiết hoạt động</Text>
           </div>
           <Tag color="blue">{filteredActivities.length} hoạt động</Tag>
         </div>
@@ -431,7 +351,6 @@ const Activities = () => {
         />
       </Card>
 
-      {/* Detail Modal */}
       <Modal
         title={
           <Space>
@@ -479,95 +398,6 @@ const Activities = () => {
         )}
       </Modal>
 
-      {/* Update Modal */}
-      <Modal
-        title={
-          <Space>
-            <PencilIcon style={iconMd} />
-            Cập nhật Hoạt động
-          </Space>
-        }
-        open={showUpdateModal}
-        onCancel={() => {
-          setShowUpdateModal(false);
-          updateForm.resetFields();
-        }}
-        footer={null}
-        width={600}
-      >
-        <Form
-          form={updateForm}
-          layout="vertical"
-          onFinish={handleUpdateSubmit}
-        >
-          <Form.Item
-            name="title"
-            label="Tiêu đề"
-            rules={[{ required: true, message: 'Vui lòng nhập tiêu đề!' }]}
-          >
-            <Input placeholder="Nhập tiêu đề hoạt động" />
-          </Form.Item>
-          <Form.Item
-            name="description"
-            label="Mô tả"
-            rules={[{ required: true, message: 'Vui lòng nhập mô tả!' }]}
-          >
-            <TextArea rows={4} placeholder="Nhập mô tả hoạt động" />
-          </Form.Item>
-          <Form.Item
-            name="location"
-            label="Địa điểm"
-          >
-            <Input placeholder="Nhập địa điểm" />
-          </Form.Item>
-          <Form.Item
-            name="startTime"
-            label="Thời gian bắt đầu"
-          >
-            <DatePicker
-              showTime
-              style={{ width: '100%' }}
-              format="DD/MM/YYYY HH:mm"
-              placeholder="Chọn thời gian bắt đầu"
-            />
-          </Form.Item>
-          <Form.Item
-            name="endTime"
-            label="Thời gian kết thúc"
-          >
-            <DatePicker
-              showTime
-              style={{ width: '100%' }}
-              format="DD/MM/YYYY HH:mm"
-              placeholder="Chọn thời gian kết thúc"
-            />
-          </Form.Item>
-          <Form.Item
-            name="status"
-            label="Trạng thái"
-          >
-            <Select placeholder="Chọn trạng thái">
-              <Option value="upcoming">Sắp tới</Option>
-              <Option value="active">Đang diễn ra</Option>
-              <Option value="completed">Đã hoàn thành</Option>
-              <Option value="cancelled">Đã hủy</Option>
-            </Select>
-          </Form.Item>
-          <Form.Item>
-            <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-              <Button onClick={() => {
-                setShowUpdateModal(false);
-                updateForm.resetFields();
-              }}>
-                Hủy
-              </Button>
-              <Button type="primary" htmlType="submit">
-                Cập nhật
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Modal>
     </div>
   );
 };

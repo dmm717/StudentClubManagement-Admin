@@ -16,10 +16,6 @@ const { RangePicker } = DatePicker;
 const { Title, Text } = Typography;
 const { Option } = Select;
 
-/**
- * Component Reports - Báo cáo tổng hợp hệ thống
- * Hiển thị thống kê theo từng CLB: thành viên, hoạt động, doanh thu
- */
 const Reports = () => {
   const [loading, setLoading] = useState(true);
   const [reportData, setReportData] = useState([]);
@@ -27,7 +23,6 @@ const Reports = () => {
   const [selectedClub, setSelectedClub] = useState('all');
   const [clubs, setClubs] = useState([]);
   
-  // Tổng số liệu
   const [summary, setSummary] = useState({
     totalMembers: 0,
     totalActivities: 0,
@@ -39,14 +34,9 @@ const Reports = () => {
     loadReportData();
   }, [dateRange, selectedClub]);
 
-  /**
-   * Load dữ liệu báo cáo
-   * Kết hợp data từ clubs và activities
-   */
   const loadReportData = async () => {
     setLoading(true);
     try {
-      // Load clubs và activities
       const [clubsResponse, activitiesResponse] = await Promise.all([
         clubsAPI.getAll(),
         activitiesAPI.getAll()
@@ -57,18 +47,15 @@ const Reports = () => {
       
       setClubs(clubsData);
 
-      // Tạo map để đếm activities cho mỗi club
       const activityCountMap = {};
       activitiesData.forEach(activity => {
         const clubId = activity.clubId;
         activityCountMap[clubId] = (activityCountMap[clubId] || 0) + 1;
       });
 
-      // Tạo report data cho mỗi club
       const reports = clubsData.map(club => {
         const memberCount = club.memberCount || 0;
         const activityCount = activityCountMap[club.id] || 0;
-        // Tính doanh thu = số thành viên * phí thành viên
         const revenue = memberCount * (club.membershipFee || 0);
 
         return {
@@ -83,13 +70,11 @@ const Reports = () => {
         };
       });
 
-      // Filter theo club nếu được chọn
       let filteredReports = reports;
       if (selectedClub !== 'all') {
         filteredReports = reports.filter(r => r.clubId === parseInt(selectedClub));
       }
 
-      // Filter theo date range nếu có
       if (dateRange && dateRange[0] && dateRange[1]) {
         const startDate = dateRange[0].startOf('day');
         const endDate = dateRange[1].endOf('day');
@@ -103,7 +88,6 @@ const Reports = () => {
 
       setReportData(filteredReports);
 
-      // Tính tổng
       const totals = filteredReports.reduce((acc, curr) => ({
         totalMembers: acc.totalMembers + curr.members,
         totalActivities: acc.totalActivities + curr.activities,
@@ -120,12 +104,8 @@ const Reports = () => {
     }
   };
 
-  /**
-   * Export báo cáo ra CSV
-   */
   const handleExport = () => {
     try {
-      // Tạo CSV content
       const headers = ['CLB', 'Số thành viên', 'Số hoạt động', 'Doanh thu (VNĐ)', 'Trạng thái'];
       const rows = reportData.map(item => [
         item.clubName,
@@ -140,7 +120,6 @@ const Reports = () => {
         ...rows.map(row => row.join(','))
       ].join('\n');
 
-      // Thêm BOM để Excel hiển thị tiếng Việt đúng
       const BOM = '\uFEFF';
       const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
@@ -159,7 +138,6 @@ const Reports = () => {
     }
   };
 
-  // Cấu hình columns cho table
   const columns = [
     {
       title: 'CLB',
@@ -216,15 +194,28 @@ const Reports = () => {
       key: 'status',
       align: 'center',
       filters: [
-        { text: 'Đang hoạt động', value: 'Active' },
-        { text: 'Tạm dừng', value: 'Unactive' },
+        { text: 'Đang hoạt động', value: 'dangHoatDong' },
+        { text: 'Tạm dừng', value: 'tamDung' },
       ],
-      onFilter: (value, record) => record.status === value,
-      render: (status) => (
-        <Tag color={status === 'Active' ? 'success' : 'default'}>
-          {status === 'Active' ? 'Đang hoạt động' : 'Tạm dừng'}
-        </Tag>
-      )
+      onFilter: (value, record) => {
+        const recordStatus = record.status?.toLowerCase();
+        if (value === 'dangHoatDong') {
+          return recordStatus === 'danghoatdong' || recordStatus === 'active';
+        }
+        if (value === 'tamDung') {
+          return recordStatus === 'tamdung' || recordStatus === 'inactive' || recordStatus === 'unactive';
+        }
+        return true;
+      },
+      render: (status) => {
+        const statusLower = status?.toLowerCase();
+        const isActive = statusLower === 'danghoatdong' || statusLower === 'active';
+        return (
+          <Tag color={isActive ? 'success' : 'default'}>
+            {isActive ? 'Đang hoạt động' : 'Tạm dừng'}
+          </Tag>
+        );
+      }
     },
   ];
 
@@ -261,7 +252,6 @@ const Reports = () => {
 
   return (
     <div className="reports-container">
-      {/* Header */}
       <div className="page-header">
         <div>
           <Title level={2} style={{ margin: 0 }}>Báo cáo tổng hợp</Title>
@@ -269,7 +259,6 @@ const Reports = () => {
         </div>
       </div>
 
-      {/* Filters */}
       <Card className="filter-card" style={{ marginBottom: 24 }}>
         <Row gutter={16}>
           <Col xs={24} sm={12} md={8}>
@@ -327,7 +316,6 @@ const Reports = () => {
         </Row>
       </Card>
 
-      {/* Statistics Cards */}
       <div className="stat-grid" style={{ marginBottom: 24 }}>
         {statCards.map((item) => {
           const Icon = item.icon;
@@ -347,7 +335,6 @@ const Reports = () => {
         })}
       </div>
 
-      {/* Data Table */}
       <Card>
         <Spin spinning={loading}>
           <Table

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Card, Table, Input, Select, Button, Space, Tag, Typography, Row, Col, Statistic, Modal, Form, Switch, Descriptions } from 'antd';
+import { Card, Table, Input, Select, Button, Space, Tag, Typography, Row, Col, Modal, Form, Switch, Descriptions } from 'antd';
 import {
   UserCircleIcon,
   MagnifyingGlassIcon,
@@ -17,48 +17,32 @@ import './Accounts.css';
 const { Title, Text } = Typography;
 const { Option } = Select;
 
-/**
- * Component Accounts - Quản lý tài khoản
- * Chức năng: Xem danh sách, khóa/mở khóa, reset mật khẩu, quản lý vai trò
- */
 const Accounts = () => {
-  // State quản lý danh sách tài khoản
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(false);
   
-  // State cho filter và search
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   
-  // State quản lý modal
   const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
   const [showRoleModal, setShowRoleModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [accountDetail, setAccountDetail] = useState(null);
   
-  // Form instances
   const [resetPasswordForm] = Form.useForm();
   const [roleForm] = Form.useForm();
 
-  // Load danh sách accounts khi component mount
   useEffect(() => {
     loadAccounts();
   }, []);
 
-  /**
-   * Hàm load danh sách tài khoản từ API
-   * API: GET /api/admin/accounts
-   */
   const loadAccounts = async () => {
     setLoading(true);
     try {
-      // TODO: Backend chưa có AccountsController - cần implement GET /api/accounts
       const response = await accountsAPI.getAll();
-      // Axios wraps response in .data
       setAccounts(response.data || []);
     } catch (error) {
-      // If 404, show message that API is not implemented yet
       if (error.response?.status === 404) {
         showError('API quản lý tài khoản chưa được implement trong backend!');
       } else {
@@ -69,33 +53,21 @@ const Accounts = () => {
     }
   };
 
-  /**
-   * Hàm filter danh sách accounts theo search term và status
-   * Filter client-side để tìm kiếm nhanh
-   */
   const filteredAccounts = accounts.filter(account => {
-    // Tìm kiếm theo username, fullName, email
     const matchesSearch = 
       account.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       account.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       account.email?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    // Filter theo trạng thái (all/active/locked)
     const matchesStatus = filterStatus === 'all' || 
       (filterStatus === 'active' ? account.isActive : !account.isActive);
     
     return matchesSearch && matchesStatus;
   });
 
-  /**
-   * Hàm xử lý khóa/mở khóa tài khoản
-   * API: PUT /api/admin/accounts/{id}/lock hoặc PUT /api/admin/accounts/{id}/activate
-   * @param {object} account - Tài khoản cần thay đổi trạng thái
-   */
   const handleToggleStatus = async (account) => {
     const action = account.isActive ? 'khóa' : 'kích hoạt';
     
-    // Hiển thị confirm dialog
     const result = await showConfirm(
       `Bạn có chắc chắn muốn ${action} tài khoản "${account.username}"?`,
       `Xác nhận ${action} tài khoản`
@@ -103,35 +75,25 @@ const Accounts = () => {
     
     if (result.isConfirmed) {
       try {
-        // Gọi API lock hoặc activate tùy theo trạng thái hiện tại
         if (account.isActive) {
-          await accountsAPI.lock(account.id);  // PUT /api/admin/accounts/{id}/lock
+          await accountsAPI.lock(account.id);
         } else {
-          await accountsAPI.activate(account.id);  // PUT /api/admin/accounts/{id}/activate
+          await accountsAPI.activate(account.id);
         }
         showSuccess(`Đã ${action} tài khoản thành công!`);
-        loadAccounts();  // Reload danh sách sau khi cập nhật
+        loadAccounts();
       } catch (error) {
         showError(error.response?.data?.message || `Không thể ${action} tài khoản!`);
       }
     }
   };
 
-  /**
-   * Hàm mở modal reset mật khẩu
-   * @param {object} account - Tài khoản cần reset mật khẩu
-   */
   const handleResetPassword = (account) => {
     setSelectedAccount(account);
     setShowResetPasswordModal(true);
     resetPasswordForm.resetFields();
   };
 
-  /**
-   * Hàm xử lý submit form reset mật khẩu
-   * API: PUT /api/admin/accounts/{id}/reset-password
-   * @param {object} values - Giá trị từ form (newPassword, confirmPassword)
-   */
   const handleResetPasswordSubmit = async (values) => {
     try {
       await accountsAPI.resetPassword(selectedAccount.id, values.newPassword);
@@ -143,33 +105,20 @@ const Accounts = () => {
     }
   };
 
-  /**
-   * Hàm xem chi tiết tài khoản
-   * API: GET /api/admin/accounts/{id}
-   * @param {object} account - Tài khoản cần xem chi tiết
-   */
   const handleViewDetail = async (account) => {
     setSelectedAccount(account);
     setShowDetailModal(true);
     try {
-      // Gọi API để lấy thông tin chi tiết tài khoản
       const response = await accountsAPI.getById(account.id);
       setAccountDetail(response.data);
     } catch (error) {
       showError('Không thể tải thông tin chi tiết tài khoản!');
-      // Nếu không lấy được chi tiết, sử dụng dữ liệu từ danh sách
       setAccountDetail(account);
     }
   };
 
-  /**
-   * Hàm mở modal quản lý vai trò
-   * Load vai trò hiện tại của account vào form
-   * @param {object} account - Tài khoản cần quản lý vai trò
-   */
   const handleManageRoles = (account) => {
     setSelectedAccount(account);
-    // Set giá trị form từ roles hiện tại của account
     roleForm.setFieldsValue({
       isStudent: account.roles?.includes('student') || false,
       isClubLeader: account.roles?.includes('clubleader') || account.roles?.includes('club_leader') || false,
@@ -178,36 +127,26 @@ const Accounts = () => {
     setShowRoleModal(true);
   };
 
-  /**
-   * Hàm xử lý submit form quản lý vai trò
-   * API: POST /api/admin/accounts/{id}/roles (thêm vai trò)
-   * API: DELETE /api/admin/accounts/{id}/roles (xóa vai trò)
-   * @param {object} values - Giá trị từ form (isStudent, isClubLeader, isAdmin)
-   */
   const handleRoleSubmit = async (values) => {
-    // Tạo mảng roles mới từ form values
     const newRoles = [];
     if (values.isStudent) newRoles.push('student');
     if (values.isClubLeader) newRoles.push('clubleader');
     if (values.isAdmin) newRoles.push('admin');
 
-    // So sánh với roles hiện tại để tìm roles cần thêm/xóa
     const currentRoles = selectedAccount.roles || [];
-    const rolesToAdd = newRoles.filter(r => !currentRoles.includes(r));      // Roles cần thêm
-    const rolesToRemove = currentRoles.filter(r => !newRoles.includes(r));   // Roles cần xóa
+    const rolesToAdd = newRoles.filter(r => !currentRoles.includes(r));
+    const rolesToRemove = currentRoles.filter(r => !newRoles.includes(r));
 
     try {
-      // Thêm các vai trò mới: POST /api/admin/accounts/{id}/roles
       for (const role of rolesToAdd) {
         await accountsAPI.addRole(selectedAccount.id, { roleName: role });
       }
-      // Xóa các vai trò cũ: DELETE /api/admin/accounts/{id}/roles
       for (const role of rolesToRemove) {
         await accountsAPI.removeRole(selectedAccount.id, { roleName: role });
       }
       showSuccess('Đã cập nhật vai trò thành công!');
       setShowRoleModal(false);
-      loadAccounts();  // Reload danh sách sau khi cập nhật
+      loadAccounts();
     } catch (error) {
       showError('Không thể cập nhật vai trò!');
     }
@@ -216,7 +155,6 @@ const Accounts = () => {
 
   const iconMd = getIconSize('md');
   const iconSm = getIconSize('sm');
-  const iconXl = getIconSize('xl');
 
   const columns = [
     {
@@ -406,7 +344,6 @@ const Accounts = () => {
         </div>
       </div>
 
-      {/* Stats */}
       <div className="stat-grid" style={{ marginBottom: 24 }}>
         {statCards.map((item) => (
           <Card className="stat-card card-hover" bordered={false} key={item.title}>
@@ -423,7 +360,6 @@ const Accounts = () => {
         ))}
       </div>
 
-      {/* Filters */}
       <Card className="filter-card" style={{ marginBottom: 24 }}>
         <Row gutter={16}>
           <Col xs={24} sm={12} lg={8}>
@@ -458,7 +394,6 @@ const Accounts = () => {
         </Row>
       </Card>
 
-      {/* Accounts Table */}
       <Card className="accounts-card">
         <div className="table-head">
           <div>
@@ -483,7 +418,6 @@ const Accounts = () => {
         />
       </Card>
 
-      {/* Reset Password Modal */}
       <Modal
         title="Reset mật khẩu"
         open={showResetPasswordModal}
@@ -542,7 +476,6 @@ const Accounts = () => {
         </Form>
       </Modal>
 
-      {/* Account Detail Modal */}
       <Modal
         title="Chi tiết tài khoản"
         open={showDetailModal}
@@ -613,7 +546,6 @@ const Accounts = () => {
         )}
       </Modal>
 
-      {/* Manage Roles Modal */}
       <Modal
         title="Quản lý vai trò"
         open={showRoleModal}

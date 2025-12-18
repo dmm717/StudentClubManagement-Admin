@@ -1,6 +1,5 @@
-/* eslint-disable */
 import { useState, useEffect } from 'react';
-import { Card, Input, Select, Button, Space, Tag, Typography, Row, Col, Statistic, Modal, Descriptions, Form, Table } from 'antd';
+import { Card, Input, Select, Button, Space, Tag, Typography, Row, Col, Modal, Descriptions, Form, Table } from 'antd';
 import {
   DocumentTextIcon,
   MagnifyingGlassIcon,
@@ -19,20 +18,14 @@ import './Requests.css';
 const { Title, Text } = Typography;
 const { Option } = Select;
 
-/**
- * Component Requests - Duyệt yêu cầu trở thành Club Leader
- * Chức năng: Xem danh sách yêu cầu, xem chi tiết, duyệt/từ chối yêu cầu
- */
 const Requests = () => {
-  // State quản lý danh sách yêu cầu
   const [requests, setRequests] = useState([]);
-  const [processedRequests, setProcessedRequests] = useState([]); // Gộp đã duyệt và từ chối
+  const [processedRequests, setProcessedRequests] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingProcessed, setLoadingProcessed] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchTermProcessed, setSearchTermProcessed] = useState('');
   
-  // State quản lý thống kê
   const [stats, setStats] = useState({
     totalApproved: 0,
     totalRejected: 0,
@@ -40,7 +33,6 @@ const Requests = () => {
     total: 0
   });
   
-  // State quản lý modal
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showApproveModal, setShowApproveModal] = useState(false);
@@ -48,27 +40,18 @@ const Requests = () => {
   const [rejectForm] = Form.useForm();
   const [approveForm] = Form.useForm();
 
-  // Load danh sách yêu cầu khi component mount
   useEffect(() => {
     loadPendingRequests();
     loadProcessedRequests();
     loadStats();
   }, []);
 
-  /**
-   * Hàm load danh sách yêu cầu chờ duyệt
-   * API: GET /api/club-leader-requests (admin only)
-   * Sau đó load thông tin account cho mỗi request: GET /api/admin/accounts/{id}
-   */
   const loadPendingRequests = async () => {
     setLoading(true);
     try {
-      // Backend: GET /api/club-leader-requests returns array directly
       const response = await clubLeaderRequestAPI.getPending();
-      // Axios wraps response in .data, backend returns array directly
       const requestsData = Array.isArray(response.data) ? response.data : [];
       
-      // Fetch account details for each request
       const requestsWithAccounts = await Promise.all(
         requestsData.map(async (request) => {
           try {
@@ -89,17 +72,12 @@ const Requests = () => {
       setRequests(requestsWithAccounts);
     } catch (error) {
       showError(error.response?.data?.message || 'Không thể tải danh sách yêu cầu!');
-      setRequests([]); // Set empty array on error
+      setRequests([]);
     } finally {
       setLoading(false);
     }
   };
 
-  /**
-   * Hàm load danh sách yêu cầu đã xử lý (đã duyệt + từ chối)
-   * API: GET /api/admin/accounts/leader-requests/approved
-   *      GET /api/admin/accounts/leader-requests/rejected
-   */
   const loadProcessedRequests = async () => {
     setLoadingProcessed(true);
     try {
@@ -111,7 +89,6 @@ const Requests = () => {
       const approved = Array.isArray(approvedResponse.data) ? approvedResponse.data : [];
       const rejected = Array.isArray(rejectedResponse.data) ? rejectedResponse.data : [];
       
-      // Fetch account details for each processed request
       const processedWithAccounts = await Promise.all(
         [...approved, ...rejected].map(async (request) => {
           try {
@@ -138,10 +115,6 @@ const Requests = () => {
     }
   };
 
-  /**
-   * Hàm load thống kê yêu cầu leader
-   * API: GET /api/admin/accounts/leader-requests/stats
-   */
   const loadStats = async () => {
     try {
       const response = await clubLeaderRequestAPI.getStats();
@@ -158,10 +131,6 @@ const Requests = () => {
     }
   };
 
-  /**
-   * Hàm filter danh sách requests theo search term
-   * Tìm kiếm theo tên, username, email, hoặc accountId
-   */
   const filteredRequests = requests.filter(request => {
     if (!searchTerm) return true;
     const searchLower = searchTerm.toLowerCase();
@@ -184,14 +153,8 @@ const Requests = () => {
     );
   });
 
-  /**
-   * Hàm xử lý xem chi tiết yêu cầu
-   * Load lại thông tin account để có đầy đủ thông tin
-   * @param {object} request - Yêu cầu cần xem chi tiết
-   */
   const handleViewDetail = async (request) => {
     try {
-      // Load lại thông tin account để có dữ liệu mới nhất
       const accountId = request.accountId || request.account?.id;
       if (accountId) {
         try {
@@ -202,7 +165,6 @@ const Requests = () => {
           };
           setSelectedRequest(updatedRequest);
         } catch (error) {
-          // Nếu không load được account mới, dùng account cũ
           setSelectedRequest(request);
         }
       } else {
@@ -216,10 +178,6 @@ const Requests = () => {
     }
   };
 
-  /**
-   * Hàm mở modal duyệt yêu cầu
-   * @param {object} request - Yêu cầu cần duyệt
-   */
   const handleApprove = (request) => {
     setSelectedRequest(request);
     setShowDetailModal(false);
@@ -227,23 +185,16 @@ const Requests = () => {
     approveForm.resetFields();
   };
 
-  /**
-   * Hàm xử lý submit form duyệt yêu cầu
-   * API: PUT /api/club-leader-requests/{id}/approve
-   * @param {object} values - Giá trị từ form (adminNote - ghi chú duyệt)
-   */
   const handleApproveSubmit = async (values) => {
     try {
       await clubLeaderRequestAPI.approve(selectedRequest.id, values.adminNote || '');
       showSuccess('Đã duyệt yêu cầu thành công! Tài khoản club leader đã được tạo.');
       setShowApproveModal(false);
-      // Reload tất cả dữ liệu sau khi duyệt
       await Promise.all([
         loadPendingRequests(),
         loadProcessedRequests(),
         loadStats()
       ]);
-      // Dispatch event to notify AdminLayout to update badge count
       window.dispatchEvent(new CustomEvent('requestProcessed'));
     } catch (error) {
       showError(error.response?.data?.message || 'Không thể duyệt yêu cầu!');
@@ -257,23 +208,16 @@ const Requests = () => {
     rejectForm.resetFields();
   };
 
-  /**
-   * Hàm xử lý submit form từ chối yêu cầu
-   * API: PUT /api/club-leader-requests/{id}/reject
-   * @param {object} values - Giá trị từ form (rejectReason - lý do từ chối)
-   */
   const handleRejectSubmit = async (values) => {
     try {
       await clubLeaderRequestAPI.reject(selectedRequest.id, values.rejectReason || '');
       showSuccess('Đã từ chối yêu cầu!');
       setShowRejectModal(false);
-      // Reload tất cả dữ liệu sau khi từ chối
       await Promise.all([
         loadPendingRequests(),
         loadProcessedRequests(),
         loadStats()
       ]);
-      // Dispatch event to notify AdminLayout to update badge count
       window.dispatchEvent(new CustomEvent('requestProcessed'));
     } catch (error) {
       showError('Không thể từ chối yêu cầu!');
@@ -283,7 +227,6 @@ const Requests = () => {
   const iconSm = getIconSize('sm');
   const iconMd = getIconSize('md');
   const iconLg = getIconSize('lg');
-  const iconXl = getIconSize('xl');
 
   const statCards = [
     {
@@ -328,7 +271,6 @@ const Requests = () => {
         </div>
       </div>
 
-      {/* Request Stats */}
       <div className="stat-grid animate-slide-up" style={{ marginBottom: 24 }}>
         {statCards.map((item) => {
           const Icon = item.icon;
@@ -348,9 +290,7 @@ const Requests = () => {
         })}
       </div>
 
-      {/* Vertical Layout: Pending trên, Processed dưới */}
       <Row gutter={[0, 24]}>
-        {/* Top Section: Yêu cầu chờ duyệt */}
         <Col xs={24}>
           <div>
             <Title level={3} style={{ marginBottom: 16 }}>
@@ -358,7 +298,6 @@ const Requests = () => {
               Yêu cầu chờ duyệt
             </Title>
             
-            {/* Search for Pending */}
             <Card style={{ marginBottom: 24 }}>
               <Space.Compact style={{ width: '100%' }}>
                 <Input
@@ -377,7 +316,6 @@ const Requests = () => {
               </Space.Compact>
             </Card>
 
-            {/* Pending Requests Table */}
             <Card className="request-card">
               <Table
                 columns={[
@@ -484,7 +422,6 @@ const Requests = () => {
           </div>
         </Col>
 
-        {/* Bottom Section: Yêu cầu đã xử lý */}
         <Col xs={24}>
           <div>
             <Title level={3} style={{ marginBottom: 16 }}>
@@ -492,7 +429,6 @@ const Requests = () => {
               Yêu cầu đã xử lý
             </Title>
             
-            {/* Search for Processed */}
             <Card style={{ marginBottom: 24 }}>
               <Space.Compact style={{ width: '100%' }}>
                 <Input
@@ -509,7 +445,6 @@ const Requests = () => {
               </Space.Compact>
             </Card>
 
-            {/* Processed Requests Table */}
             <Card className="request-card">
               <Table
                 columns={[
@@ -555,13 +490,13 @@ const Requests = () => {
                     align: 'center',
                     render: (_, record) => {
                       const status = record.status?.toLowerCase();
-                      if (status === 'approved') {
+                      if (status === 'daduycho' || status === 'approved') {
                         return (
                           <Tag color="green" style={{ borderRadius: '12px', padding: '4px 14px', fontSize: '13px' }}>
                             Đã duyệt
                           </Tag>
                         );
-                      } else if (status === 'rejected') {
+                      } else if (status === 'datuochoi' || status === 'rejected') {
                         return (
                           <Tag color="red" style={{ borderRadius: '12px', padding: '4px 14px', fontSize: '13px' }}>
                             Đã từ chối
@@ -610,7 +545,6 @@ const Requests = () => {
         </Col>
       </Row>
 
-      {/* Detail Modal */}
       <Modal
         title={null}
         open={showDetailModal}
@@ -618,7 +552,7 @@ const Requests = () => {
         footer={
           <Space>
             <Button onClick={() => setShowDetailModal(false)}>Đóng</Button>
-            {selectedRequest?.status?.toLowerCase() === 'pending' && (
+            {(selectedRequest?.status?.toLowerCase() === 'dangcho' || selectedRequest?.status?.toLowerCase() === 'pending') && (
               <>
                 <Button danger onClick={() => handleReject(selectedRequest)}>
                   Từ chối
@@ -637,7 +571,6 @@ const Requests = () => {
       >
         {selectedRequest && (
           <div>
-            {/* Thông tin tài khoản */}
             <Title level={4} style={{ marginBottom: 16, marginTop: 0 }}>
               <UserCircleIcon style={{ ...iconMd, marginRight: 8 }} />
               Thông tin tài khoản
@@ -693,7 +626,6 @@ const Requests = () => {
               )}
             </Descriptions>
 
-            {/* Thông tin đơn yêu cầu */}
             <Title level={4} style={{ marginBottom: 16 }}>
               <DocumentTextIcon style={{ ...iconMd, marginRight: 8 }} />
               Thông tin đơn yêu cầu
@@ -761,7 +693,6 @@ const Requests = () => {
         )}
       </Modal>
 
-      {/* Approve Modal */}
       <Modal
         title="Duyệt yêu cầu"
         open={showApproveModal}
@@ -802,7 +733,6 @@ const Requests = () => {
         </Form>
       </Modal>
 
-      {/* Reject Modal */}
       <Modal
         title="Từ chối yêu cầu"
         open={showRejectModal}

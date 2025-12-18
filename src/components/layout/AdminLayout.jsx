@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Layout, Menu, Button, Avatar, Typography, Space, Badge } from 'antd';
 import {
   HomeIcon,
@@ -29,7 +29,6 @@ const AdminLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Load pending requests count
   useEffect(() => {
     const loadPendingCount = async () => {
       try {
@@ -42,10 +41,8 @@ const AdminLayout = () => {
     };
 
     loadPendingCount();
-    // Reload count every 15 seconds
     const interval = setInterval(loadPendingCount, 15000);
 
-    // Listen for requestProcessed event from Requests page
     const handleRequestProcessed = () => {
       loadPendingCount();
     };
@@ -65,7 +62,7 @@ const AdminLayout = () => {
     }
   };
 
-  const iconSize = getIconSize('md'); // 20x20 for menu icons
+  const iconSize = getIconSize('md');
 
   const handleMenuClick = ({ key }) => {
     navigate(key);

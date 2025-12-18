@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Card, Table, Input, Select, Button, Space, Tag, Typography, Row, Col, Statistic, Modal, Descriptions } from 'antd';
+import { Card, Table, Input, Select, Button, Space, Tag, Typography, Row, Col, Modal, Descriptions } from 'antd';
 import {
   BuildingOfficeIcon,
   MagnifyingGlassIcon,
@@ -17,42 +17,28 @@ import './Clubs.css';
 const { Title, Text } = Typography;
 const { Option } = Select;
 
-/**
- * Component Clubs - Giám sát và quản lý câu lạc bộ
- * Chức năng: Xem danh sách, xem chi tiết, khóa/mở khóa clubs
- */
 const Clubs = () => {
-  // State quản lý danh sách clubs
   const [clubs, setClubs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [totalRevenue, setTotalRevenue] = useState(0);
   
-  // State cho filter và search
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   
-  // State quản lý modal chi tiết
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedClub, setSelectedClub] = useState(null);
 
-  // Load danh sách clubs khi component mount
   useEffect(() => {
     loadClubs();
   }, []);
 
-  /**
-   * Hàm load danh sách clubs từ API
-   * API: GET /api/clubs
-   */
   const loadClubs = async () => {
     setLoading(true);
     try {
-      // Backend: GET /api/clubs returns array directly with monitoring info (memberCount, totalRevenue)
       const clubsResponse = await clubsAPI.getAll();
       const clubsData = clubsResponse.data || [];
       setClubs(clubsData);
       
-      // Tính tổng doanh thu từ tất cả các club (backend đã trả về totalRevenue cho mỗi club)
       const totalRev = clubsData.reduce((sum, club) => {
         const revenue = club.totalRevenue || club.TotalRevenue || 0;
         return sum + revenue;
@@ -65,49 +51,32 @@ const Clubs = () => {
     }
   };
 
-  /**
-   * Hàm filter danh sách clubs theo search term và status
-   * Filter client-side để tìm kiếm nhanh
-   */
   const filteredClubs = clubs.filter(club => {
-    // Tìm kiếm theo tên và mô tả
     const matchesSearch = 
       club.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       club.description?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    // Xử lý cả "active" (lowercase) và "Active" (PascalCase)
-    const isActive = club.status === 'active' || club.status === 'Active';
+    const statusLower = club.status?.toLowerCase();
+    const isActive = statusLower === 'danghoatdong' || statusLower === 'active';
     
-    // Filter theo trạng thái (all/active/locked)
     const matchesStatus = filterStatus === 'all' || 
       (filterStatus === 'active' ? isActive : !isActive);
     
     return matchesSearch && matchesStatus;
   });
 
-  /**
-   * Hàm xem chi tiết club
-   * API: GET /api/clubs/{id}
-   * Merge dữ liệu từ danh sách (có establishedDate, membershipFee) với detail API (có activities)
-   * @param {number} clubId - ID của club cần xem chi tiết
-   */
   const handleViewDetail = async (clubId) => {
     try {
-      // Lấy dữ liệu từ danh sách clubs hiện tại (có đầy đủ establishedDate và membershipFee)
       const clubFromList = clubs.find(c => c.id === clubId);
       
-      // Gọi API để lấy thông tin chi tiết (activities, etc.)
       const clubResponse = await clubsAPI.getById(clubId);
       
-      // Merge dữ liệu: ưu tiên dữ liệu từ danh sách (có establishedDate, membershipFee)
-      // và bổ sung thông tin từ detail API (activities, etc.)
       const detailData = clubResponse.data || {};
       const listData = clubFromList || {};
       
       setSelectedClub({
-        ...listData, // Dữ liệu từ danh sách có đầy đủ establishedDate và membershipFee
-        ...detailData, // Dữ liệu từ detail API (activities, etc.)
-        // Đảm bảo giữ lại establishedDate và membershipFee từ danh sách (xử lý cả PascalCase và camelCase)
+        ...listData,
+        ...detailData,
         establishedDate: listData.establishedDate || listData.EstablishedDate || detailData.establishedDate || detailData.EstablishedDate,
         EstablishedDate: listData.establishedDate || listData.EstablishedDate || detailData.establishedDate || detailData.EstablishedDate,
         membershipFee: (listData.membershipFee !== null && listData.membershipFee !== undefined) 
@@ -124,12 +93,10 @@ const Clubs = () => {
           : (detailData.membershipFee !== null && detailData.membershipFee !== undefined)
           ? detailData.membershipFee
           : detailData.MembershipFee,
-        // Lấy revenue từ danh sách (backend đã có API trả về totalRevenue)
         revenue: listData.totalRevenue || listData.TotalRevenue || detailData.totalRevenue || detailData.TotalRevenue || 0
       });
       setShowDetailModal(true);
     } catch (error) {
-      // Nếu API lỗi, vẫn hiển thị dữ liệu từ danh sách
       const clubFromList = clubs.find(c => c.id === clubId);
       if (clubFromList) {
         setSelectedClub({
@@ -143,18 +110,12 @@ const Clubs = () => {
     }
   };
 
-  /**
-   * Hàm xử lý khóa/mở khóa club
-   * API: PUT /api/clubs/{id} với UpdateClubDto (cập nhật status)
-   * @param {object} club - Club cần thay đổi trạng thái
-   */
   const handleToggleStatus = async (club) => {
-    const isActive = club.status === 'active' || club.status === 'Active';
+    const statusLower = club.status?.toLowerCase();
+    const isActive = statusLower === 'danghoatdong' || statusLower === 'active';
     const action = isActive ? 'khóa' : 'mở khóa';
-    // Backend dùng "Active"/"Inactive" (PascalCase)
-    const newStatus = isActive ? 'Inactive' : 'Active';
+    const newStatus = isActive ? 'tamDung' : 'dangHoatDong';
     
-    // Hiển thị confirm dialog
     const result = await showConfirm(
       `Bạn có chắc chắn muốn ${action} câu lạc bộ "${club.name}"?`,
       `Xác nhận ${action} CLB`
@@ -162,20 +123,17 @@ const Clubs = () => {
     
     if (result.isConfirmed) {
       try {
-        // Lấy đầy đủ thông tin club trước khi update để không mất dữ liệu
         let clubData = club;
         try {
           const detailResponse = await clubsAPI.getById(club.id);
           clubData = { ...club, ...detailResponse.data };
         } catch (e) {
-          // Nếu không lấy được detail, dùng dữ liệu từ danh sách
         }
         
-        // Dùng API update với UpdateClubDto - cập nhật status và giữ nguyên các field khác
         const updateData = {
           name: clubData.name || club.name,
           description: clubData.description || club.description || '',
-          status: newStatus,  // Cập nhật status mới
+          status: newStatus,
           establishedDate: clubData.establishedDate || clubData.EstablishedDate || club.establishedDate || club.EstablishedDate,
           membershipFee: (clubData.membershipFee !== null && clubData.membershipFee !== undefined) 
             ? clubData.membershipFee 
@@ -187,9 +145,9 @@ const Clubs = () => {
           imageClubsUrl: clubData.imageClubsUrl || clubData.ImageClubsUrl || club.imageClubsUrl || club.ImageClubsUrl || null
         };
         
-        await clubsAPI.update(club.id, updateData);  // PUT /api/clubs/{id}
+        await clubsAPI.update(club.id, updateData);
         showSuccess(`Đã ${action} câu lạc bộ thành công!`);
-        loadClubs();  // Reload danh sách sau khi cập nhật
+        loadClubs();
       } catch (error) {
         showError(error.response?.data?.message || `Không thể ${action} câu lạc bộ!`);
       }
@@ -198,7 +156,6 @@ const Clubs = () => {
 
   const iconSm = getIconSize('sm');
   const iconMd = getIconSize('md');
-  const iconXl = getIconSize('xl');
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -233,7 +190,6 @@ const Clubs = () => {
       align: 'center',
       width: 150,
       render: (_, record) => {
-        // Lấy totalRevenue từ backend (hỗ trợ cả camelCase và PascalCase)
         const revenue = record.totalRevenue || record.TotalRevenue || 0;
         return <Text strong>{formatCurrency(revenue)}</Text>;
       }
@@ -253,7 +209,7 @@ const Clubs = () => {
       align: 'center',
       render: (_, record) => {
         const statusLower = (record.status || '').toLowerCase();
-        const isActive = statusLower === 'active';
+        const isActive = statusLower === 'danghoatdong' || statusLower === 'active';
         return (
           <Tag
             color={isActive ? 'green' : 'red'}
@@ -283,12 +239,12 @@ const Clubs = () => {
           <Button
             size="middle"
             type="primary"
-            danger={record.status === 'active' || record.status === 'Active'}
+            danger={(record.status?.toLowerCase() === 'danghoatdong' || record.status?.toLowerCase() === 'active')}
             style={{ minWidth: 96, borderRadius: 999 }}
-            icon={record.status === 'active' || record.status === 'Active' ? <LockClosedIcon style={iconSm} /> : <LockOpenIcon style={iconSm} />}
+            icon={(record.status?.toLowerCase() === 'danghoatdong' || record.status?.toLowerCase() === 'active') ? <LockClosedIcon style={iconSm} /> : <LockOpenIcon style={iconSm} />}
             onClick={() => handleToggleStatus(record)}
           >
-            {record.status === 'active' || record.status === 'Active' ? 'Khóa' : 'Mở khóa'}
+            {(record.status?.toLowerCase() === 'danghoatdong' || record.status?.toLowerCase() === 'active') ? 'Khóa' : 'Mở khóa'}
           </Button>
         </Space>
       )
@@ -297,8 +253,14 @@ const Clubs = () => {
 
   const stats = {
     total: clubs.length,
-    active: clubs.filter(c => c.status === 'active' || c.status === 'Active').length,
-    locked: clubs.filter(c => c.status !== 'active' && c.status !== 'Active').length,
+    active: clubs.filter(c => {
+      const status = c.status?.toLowerCase();
+      return status === 'danghoatdong' || status === 'active';
+    }).length,
+    locked: clubs.filter(c => {
+      const status = c.status?.toLowerCase();
+      return status && status !== 'danghoatdong' && status !== 'active';
+    }).length,
     totalMembers: clubs.reduce((sum, c) => sum + (c.memberCount || 0), 0),
     totalRevenue: totalRevenue,
   };
@@ -354,7 +316,6 @@ const Clubs = () => {
         </div>
       </div>
 
-      {/* Stats */}
       <div className="stat-grid animate-slide-up" style={{ marginBottom: 24 }}>
         {statCards.map((item) => {
           const Icon = item.icon;
@@ -374,7 +335,6 @@ const Clubs = () => {
         })}
       </div>
 
-      {/* Filters */}
       <Card className="filter-card" style={{ marginBottom: 24 }}>
         <Row gutter={16}>
           <Col xs={24} sm={16}>
@@ -409,7 +369,6 @@ const Clubs = () => {
         </Row>
       </Card>
 
-      {/* Clubs Table */}
       <Card className="clubs-card request-card">
         <div className="table-head">
           <div>
@@ -434,7 +393,6 @@ const Clubs = () => {
         />
       </Card>
 
-      {/* Detail Modal */}
       <Modal
         title={
           <Space>
@@ -487,8 +445,8 @@ const Clubs = () => {
               </Text>
             </Descriptions.Item>
             <Descriptions.Item label="Trạng thái">
-              <Tag color={((selectedClub.status || '').toLowerCase() === 'active') ? 'green' : 'red'}>
-                {((selectedClub.status || '').toLowerCase() === 'active') ? 'Hoạt động' : 'Bị khóa'}
+              <Tag color={((selectedClub.status || '').toLowerCase() === 'danghoatdong' || (selectedClub.status || '').toLowerCase() === 'active') ? 'green' : 'red'}>
+                {((selectedClub.status || '').toLowerCase() === 'danghoatdong' || (selectedClub.status || '').toLowerCase() === 'active') ? 'Hoạt động' : 'Bị khóa'}
               </Tag>
             </Descriptions.Item>
           </Descriptions>

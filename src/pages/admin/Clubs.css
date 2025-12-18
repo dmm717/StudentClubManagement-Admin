@@ -17,7 +17,6 @@
   max-width: 100%;
 }
 
-/* Table responsive */
 .clubs-page .ant-table-wrapper {
   overflow-x: auto;
   max-width: 100%;
@@ -100,9 +99,6 @@
   text-align: left !important;
 }
 
-/* revenue styles no longer needed as card gộp vào stat */
-
-/* Responsive */
 @media (max-width: 768px) {
   .page-header {
     flex-direction: column;

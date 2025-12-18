@@ -10,10 +10,6 @@ import './Login.css';
 
 const { Title, Text } = Typography;
 
-/**
- * Component Login - Trang đăng nhập cho admin
- * Chức năng: Xác thực admin, lưu token, kiểm tra quyền admin
- */
 const Login = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
@@ -22,17 +18,8 @@ const Login = () => {
   const iconMd = getIconSize('md');
   const icon2xl = getIconSize('2xl');
   
-  // Fallback to public folder if import fails
   const backgroundImage = loginBackgroundImg || '/login-background.jpg';
 
-  /**
-   * Hàm xử lý submit form đăng nhập
-   * API: POST /api/auth/login
-   * - Kiểm tra user có role admin
-   * - Lưu token và thông tin user vào localStorage
-   * - Redirect đến dashboard nếu thành công
-   * @param {object} values - Giá trị từ form (username, password)
-   */
   const handleSubmit = async (values) => {
     setLoading(true);
     
@@ -40,7 +27,6 @@ const Login = () => {
       const response = await authAPI.login(values.username, values.password);
       const { token, accountId, username, email, fullName, roles } = response.data;
       
-      // Check if user has admin role (case-insensitive)
       const hasAdminRole = roles.some(role => role.toLowerCase() === 'admin');
       if (!hasAdminRole) {
         showError('Bạn không có quyền truy cập trang quản trị!', 'Không có quyền');
@@ -48,7 +34,6 @@ const Login = () => {
         return;
       }
       
-      // Store token and user info
       localStorage.setItem('token', token);
       localStorage.setItem('adminUser', JSON.stringify({
         accountId,

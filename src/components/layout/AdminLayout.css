@@ -1,6 +1,6 @@
 .admin-layout {
   min-height: 100vh;
-  overflow-x: hidden; /* Prevent horizontal scroll */
+  overflow-x: hidden;
 }
 
 .admin-sidebar {
@@ -239,12 +239,11 @@
   background: #f0f2f5;
   min-height: calc(100vh - 64px);
   max-width: 100%;
-  overflow-x: hidden; /* Prevent horizontal scroll */
+  overflow-x: hidden;
   animation: fadeIn 0.5s ease-out;
   width: 100%;
 }
 
-/* Responsive */
 @media (max-width: 768px) {
   .page-content {
     padding: 16px;

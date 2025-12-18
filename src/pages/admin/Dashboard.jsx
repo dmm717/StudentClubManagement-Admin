@@ -71,20 +71,21 @@ const Dashboard = () => {
 
         const leaderStats = leaderStatsRes.data || {};
 
-        // Tính doanh thu tổng (ước tính) dựa trên memberCount * membershipFee giống trang Báo cáo
         const totalRevenue = clubs.reduce((sum, club) => {
           const memberCount = club.memberCount || 0;
           const membershipFee = club.membershipFee || 0;
           return sum + memberCount * membershipFee;
         }, 0);
 
-        // Giám sát CLB: đang hoạt động / tạm dừng
-        const activeClubs = clubs.filter((c) => c.status === 'Active').length;
-        const inactiveClubs = clubs.filter(
-          (c) => c.status && c.status !== 'Active'
-        ).length;
+        const activeClubs = clubs.filter((c) => {
+          const status = c.status?.toLowerCase();
+          return status === 'danghoatdong' || status === 'active';
+        }).length;
+        const inactiveClubs = clubs.filter((c) => {
+          const status = c.status?.toLowerCase();
+          return status && status !== 'danghoatdong' && status !== 'active';
+        }).length;
 
-        // Quản lý hoạt động: sắp diễn ra / đang diễn ra / đã kết thúc (nếu có ngày bắt đầu/kết thúc)
         const now = new Date();
         let upcoming = 0;
         let ongoing = 0;
@@ -108,22 +109,21 @@ const Dashboard = () => {
           }
         });
 
-        // Quản lý tài khoản: đang hoạt động / bị khóa / tài khoản Admin
         let activeAccounts = 0;
         let lockedAccounts = 0;
         let adminAccounts = 0;
 
         accounts.forEach((account) => {
-          const status = account.status;
+          const status = account.status?.toLowerCase();
           const isActive = account.isActive;
           const isLocked = account.isLocked;
           const roles = account.roles || account.roleNames || [];
 
-          if (status === 'Active' || isActive === true) {
+          if (status === 'danghoatdong' || status === 'active' || isActive === true) {
             activeAccounts += 1;
           }
 
-          if (status === 'Locked' || isLocked === true) {
+          if (status === 'bikhoa' || status === 'locked' || isLocked === true) {
             lockedAccounts += 1;
           }
 
@@ -185,7 +185,6 @@ const Dashboard = () => {
         </Space>
       </div>
 
-      {/* Hàng 1: 4 ô thống kê chính */}
       <Row gutter={[16, 16]} className="stats-grid">
         <Col xs={24} sm={12} md={6}>
           <Card className="stat-card stat-card--clubs" loading={loading} bordered={false}>
@@ -229,7 +228,6 @@ const Dashboard = () => {
         </Col>
       </Row>
 
-      {/* Hàng 2: Chi tiết yêu cầu Leader và khu vực doanh thu */}
       <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
         <Col xs={24} md={12}>
           <Card
@@ -256,7 +254,7 @@ const Dashboard = () => {
                 <Space direction="vertical" size={4}>
                   <Text type="secondary">Đang chờ duyệt</Text>
                   <Space size={8}>
-                    <Tag color="orange">Pending</Tag>
+                    <Tag color="orange">Đang chờ</Tag>
                     <Text strong>{stats.leaderRequests.totalPending}</Text>
                   </Space>
                 </Space>
@@ -265,7 +263,7 @@ const Dashboard = () => {
                 <Space direction="vertical" size={4} style={{ marginTop: 8 }}>
                   <Text type="secondary">Đã duyệt</Text>
                   <Space size={8}>
-                    <Tag color="green">Approved</Tag>
+                    <Tag color="green">Đã duyệt</Tag>
                     <Text strong>{stats.leaderRequests.totalApproved}</Text>
                   </Space>
                 </Space>
@@ -274,7 +272,7 @@ const Dashboard = () => {
                 <Space direction="vertical" size={4} style={{ marginTop: 8 }}>
                   <Text type="secondary">Đã từ chối</Text>
                   <Space size={8}>
-                    <Tag color="red">Rejected</Tag>
+                    <Tag color="red">Đã từ chối</Tag>
                     <Text strong>{stats.leaderRequests.totalRejected}</Text>
                   </Space>
                 </Space>
@@ -310,7 +308,6 @@ const Dashboard = () => {
         </Col>
       </Row>
 
-      {/* Hàng 3: Giám sát CLB, Hoạt động, Tài khoản */}
       <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
         <Col xs={24} md={8}>
           <Card className="overview-card" bordered={false} title="Giám sát CLB">

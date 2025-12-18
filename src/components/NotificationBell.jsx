@@ -24,13 +24,11 @@ const formatTime = (dateString) => {
   return date.toLocaleDateString('vi-VN');
 };
 
-// Hàm xác định loại notification và route tương ứng (cho admin)
 const getNotificationRoute = (title, message) => {
   const titleLower = title.toLowerCase();
   const messageLower = message.toLowerCase();
   const combined = `${titleLower} ${messageLower}`;
 
-  // Leader request notifications - admin nhận notification về yêu cầu làm leader mới
   if (combined.includes('yêu cầu làm leader') || combined.includes('trở thành leader') || 
       combined.includes('leader request') || 
       (combined.includes('yêu cầu') && combined.includes('leader')) ||
@@ -38,14 +36,12 @@ const getNotificationRoute = (title, message) => {
     return '/admin/requests';
   }
 
-  // Activity notifications - admin sẽ đi đến trang activities
   if (combined.includes('hoạt động') || combined.includes('activity') || 
       combined.includes('sự kiện') || combined.includes('event') ||
       combined.includes('hoat dong')) {
     return '/admin/activities';
   }
 
-  // Club status notifications - admin sẽ đi đến trang clubs
   if ((combined.includes('khóa') || combined.includes('mở') || combined.includes('lock') || 
        combined.includes('unlock') || combined.includes('mo') || combined.includes('khoa')) &&
       (combined.includes('club') || combined.includes('câu lạc bộ') || combined.includes('clb') ||
@@ -66,10 +62,8 @@ export const NotificationBell = memo(() => {
   }, [markAsRead]);
 
   const handleNotificationClick = useCallback((notification) => {
-    // Mark as read
     handleMarkAsRead(notification.id);
     
-    // Navigate to appropriate page
     const route = getNotificationRoute(notification.title, notification.message);
     if (route) {
       setOpen(false);
