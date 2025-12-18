@@ -47,10 +47,19 @@ const Login = () => {
         navigate('/admin/dashboard');
       });
     } catch (error) {
-      showError(
-        error.response?.data?.message || 'Tên đăng nhập hoặc mật khẩu không đúng!', 
-        'Đăng nhập thất bại'
-      );
+      if (error.response?.status === 403 || 
+          error.response?.data?.message?.includes('khóa') || 
+          error.response?.data?.message?.includes('locked')) {
+        showError(
+          'Account của bạn đã bị khóa do vi phạm, liên hệ admin để được hỗ trợ',
+          'Tài khoản bị khóa'
+        );
+      } else {
+        showError(
+          error.response?.data?.message || 'Tên đăng nhập hoặc mật khẩu không đúng!', 
+          'Đăng nhập thất bại'
+        );
+      }
     } finally {
       setLoading(false);
     }
