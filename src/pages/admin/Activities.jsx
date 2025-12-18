@@ -92,34 +92,47 @@ const Activities = () => {
   };
 
   const getStatusColor = (status) => {
-    const statusLower = status?.toLowerCase();
-    if (statusLower === 'dangdienra' || statusLower === 'active' || statusLower === 'saptoi' || statusLower === 'upcoming') {
+    if (!status) return 'default';
+    const statusLower = status.toLowerCase();
+    if (statusLower === 'dangdienra' || statusLower === 'active' || statusLower === 'opened' || statusLower === 'ongoing') {
       return 'green';
+    }
+    if (statusLower === 'saptoi' || statusLower === 'upcoming' || statusLower === 'not_yet_open' || statusLower === 'notyetopen' || statusLower === 'pending' || statusLower === 'draft') {
+      return 'orange';
     }
     if (statusLower === 'dahoanthanh' || statusLower === 'completed') {
       return 'blue';
     }
-    if (statusLower === 'dahuy' || statusLower === 'cancelled') {
+    if (statusLower === 'dahuy' || statusLower === 'cancelled' || statusLower === 'canceled') {
       return 'red';
+    }
+    if (statusLower === 'active_closed' || statusLower === 'closed') {
+      return 'purple';
     }
     return 'default';
   };
 
   const getStatusLabel = (status) => {
-    const statusLower = status?.toLowerCase();
-    if (statusLower === 'dangdienra' || statusLower === 'active') {
+    if (!status) return 'N/A';
+    const statusLower = status.toLowerCase();
+    
+    if (statusLower === 'dangdienra' || statusLower === 'active' || statusLower === 'opened' || statusLower === 'ongoing') {
       return 'Đang diễn ra';
     }
-    if (statusLower === 'saptoi' || statusLower === 'upcoming') {
+    if (statusLower === 'saptoi' || statusLower === 'upcoming' || statusLower === 'not_yet_open' || statusLower === 'notyetopen' || statusLower === 'pending' || statusLower === 'draft') {
       return 'Sắp tới';
     }
     if (statusLower === 'dahoanthanh' || statusLower === 'completed') {
       return 'Đã hoàn thành';
     }
-    if (statusLower === 'dahuy' || statusLower === 'cancelled') {
+    if (statusLower === 'dahuy' || statusLower === 'cancelled' || statusLower === 'canceled') {
       return 'Đã hủy';
     }
-    return status || 'N/A';
+    if (statusLower === 'active_closed' || statusLower === 'closed') {
+      return 'Đã đóng đăng ký';
+    }
+    
+    return 'N/A';
   };
 
   const iconSm = getIconSize('sm');
