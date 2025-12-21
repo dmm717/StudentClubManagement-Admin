@@ -9,6 +9,7 @@ const api = axios.create({
   },
 });
 
+// Request interceptor: Thêm token vào header
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -17,20 +18,23 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
+// Response interceptor: Xử lý lỗi và redirect khi cần
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response) {
-      if (error.response.status === 401) {
+      const { status } = error.response;
+      
+      if (status === 401) {
+        // Unauthorized: Xóa token và redirect về trang login
         localStorage.removeItem('token');
         localStorage.removeItem('adminUser');
         window.location.href = '/admin/login';
-      } else if (error.response.status === 403) {
+      } else if (status === 403) {
+        // Forbidden: Hiển thị thông báo không có quyền
         showError('Bạn không có quyền thực hiện hành động này!', 'Không có quyền');
       }
     }
@@ -39,5 +43,4 @@ api.interceptors.response.use(
 );
 
 export default api;
-
 

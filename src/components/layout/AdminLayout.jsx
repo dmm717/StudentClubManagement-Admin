@@ -17,7 +17,6 @@ import {
 import { showConfirm } from '../../utils/notifications';
 import { getIconSize } from '../../utils/iconSizes';
 import { clubLeaderRequestAPI } from '../../services/api';
-import { NotificationBell } from '../NotificationBell';
 import './AdminLayout.css';
 
 const { Header, Sider, Content } = Layout;
@@ -217,7 +216,6 @@ const AdminLayout = () => {
               Hệ thống Quản lý Câu lạc bộ Sinh viên
             </Typography.Title>
             <Space align="center" size="middle">
-              <NotificationBell />
               <Avatar
                 icon={<UserIcon style={getIconSize('sm')} />}
                 style={{ display: 'flex', alignItems: 'center' }}
