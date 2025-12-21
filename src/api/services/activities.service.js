@@ -3,7 +3,6 @@
  * 
  * Được sử dụng bởi:
  * - src/pages/admin/Activities.jsx (getAll, getByClub, getById)
- * - src/pages/admin/Reports.jsx (getAll)
  * - src/pages/admin/Dashboard.jsx (getAll - để thống kê)
  */
 import api from '../config/client';
@@ -15,7 +14,6 @@ export const activitiesAPI = {
    * 
    * Sử dụng tại:
    * - src/pages/admin/Activities.jsx
-   * - src/pages/admin/Reports.jsx
    * - src/pages/admin/Dashboard.jsx (để thống kê)
    */
   getAll: () => api.get('/activities'),

@@ -576,10 +576,7 @@ const Requests = () => {
               Thông tin tài khoản
             </Title>
             <Descriptions column={1} bordered style={{ marginBottom: 24 }}>
-              <Descriptions.Item label="ID tài khoản">
-                {selectedRequest.accountId || selectedRequest.account?.id || 'N/A'}
-              </Descriptions.Item>
-              <Descriptions.Item label="Username">
+              <Descriptions.Item label="Tên người dùng">
                 {selectedRequest.account?.username || selectedRequest.username || 'N/A'}
               </Descriptions.Item>
               <Descriptions.Item label="Họ và tên">
@@ -631,9 +628,6 @@ const Requests = () => {
               Thông tin đơn yêu cầu
             </Title>
             <Descriptions column={1} bordered>
-              <Descriptions.Item label="ID đơn">
-                {selectedRequest.id || 'N/A'}
-              </Descriptions.Item>
               <Descriptions.Item label="Ngày gửi yêu cầu">
                 {new Date(selectedRequest.requestDate).toLocaleDateString('vi-VN', {
                   year: 'numeric',

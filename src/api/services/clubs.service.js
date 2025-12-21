@@ -4,7 +4,6 @@
  * Được sử dụng bởi:
  * - src/pages/admin/Clubs.jsx (getAll, getById, update)
  * - src/pages/admin/Activities.jsx (getAll - để lấy danh sách CLB cho filter)
- * - src/pages/admin/Reports.jsx (getAll)
  * - src/pages/admin/Dashboard.jsx (getAll - để thống kê)
  */
 import api from '../config/client';
@@ -17,7 +16,6 @@ export const clubsAPI = {
    * Sử dụng tại:
    * - src/pages/admin/Clubs.jsx
    * - src/pages/admin/Activities.jsx (để filter theo CLB)
-   * - src/pages/admin/Reports.jsx
    * - src/pages/admin/Dashboard.jsx (để thống kê)
    */
   getAll: () => api.get('/clubs'),

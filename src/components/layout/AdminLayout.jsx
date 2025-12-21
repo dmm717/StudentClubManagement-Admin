@@ -7,7 +7,6 @@ import {
   UsersIcon,
   DocumentTextIcon,
   CurrencyDollarIcon,
-  ChartBarIcon,
   Bars3Icon,
   XMarkIcon,
   ArrowRightOnRectangleIcon,
@@ -119,11 +118,6 @@ const AdminLayout = () => {
       key: '/admin/accounts',
       icon: <UsersIcon style={iconSize} />,
       label: 'Quản lý Tài khoản',
-    },
-    {
-      key: '/admin/reports',
-      icon: <ChartBarIcon style={iconSize} />,
-      label: 'Báo cáo tổng hợp',
     },
   ];
 

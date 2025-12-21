@@ -10,7 +10,6 @@ const Clubs = lazy(() => import('../pages/admin/Clubs'));
 const Requests = lazy(() => import('../pages/admin/Requests'));
 const Accounts = lazy(() => import('../pages/admin/Accounts'));
 const Activities = lazy(() => import('../pages/admin/Activities'));
-const Reports = lazy(() => import('../pages/admin/Reports'));
 
 function AppRoutes() {
   return (
@@ -47,7 +46,6 @@ function AppRoutes() {
           <Route path="requests" element={<Requests />} />
           <Route path="accounts" element={<Accounts />} />
           <Route path="activities" element={<Activities />} />
-          <Route path="reports" element={<Reports />} />
         </Route>
       </Routes>
     </Suspense>

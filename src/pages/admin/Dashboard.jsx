@@ -294,7 +294,7 @@ const Dashboard = () => {
           >
             <Text type="secondary">
               Doanh thu ước tính được tính dựa trên số lượng thành viên nhân với phí thành viên của
-              từng CLB. Xem chi tiết hơn trong trang &quot;Báo cáo&quot;.
+              từng CLB.
             </Text>
             <div style={{ marginTop: 12 }}>
               <Space direction="vertical" size={4}>
